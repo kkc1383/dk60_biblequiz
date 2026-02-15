@@ -1007,6 +1007,33 @@
             .forEach(s => s.classList.add('hidden'));
     }
 
+    // ─── 뒤로가기 히스토리 관리 ───
+    let currentScreen = 'start';
+    function pushScreen(name) {
+        if (currentScreen !== name) {
+            currentScreen = name;
+            history.pushState({ screen: name }, '');
+        }
+    }
+    window.addEventListener('popstate', function(e) {
+        const screen = e.state && e.state.screen ? e.state.screen : 'start';
+        currentScreen = screen;
+        // 퀴즈 중 뒤로가기 시 타이머 정리
+        if (screen !== 'quiz') {
+            clearInterval(timer);
+        }
+        switch (screen) {
+            case 'register': showRegister(true); break;
+            case 'quiz': break; // 퀴즈 중에는 뒤로가기 무시
+            case 'result': break; // 결과 화면은 다시 못 돌아감
+            case 'gameover': break;
+            case 'leaderboard': showLeaderboard(true); break;
+            default: showStart(true); break;
+        }
+    });
+    // 초기 상태 저장
+    history.replaceState({ screen: 'start' }, '');
+
     function updateHUD() {
         const heartsEl = document.getElementById('hud-lives');
         heartsEl.innerHTML = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
@@ -1140,22 +1167,24 @@
         }
     }
 
-    function showRegister() {
+    function showRegister(fromHistory) {
         hideAllScreens();
         registerScreen.classList.remove('hidden');
         registerScreen.classList.add('card-enter');
         setTimeout(() => registerScreen.classList.remove('card-enter'), 400);
         document.getElementById('input-name').focus();
+        if (!fromHistory) pushScreen('register');
     }
 
-    function showStart() {
+    function showStart(fromHistory) {
         hideAllScreens();
         startScreen.classList.remove('hidden');
         startScreen.classList.add('card-enter');
         setTimeout(() => startScreen.classList.remove('card-enter'), 400);
+        if (!fromHistory) pushScreen('start');
     }
 
-    function showLeaderboard() {
+    function showLeaderboard(fromHistory) {
         hideAllScreens();
         leaderboardScreen.classList.remove('hidden');
         leaderboardScreen.classList.add('card-enter');
@@ -1170,6 +1199,7 @@
         document.getElementById('leaderboard-content').classList.remove('hidden');
         document.getElementById('department-content').classList.add('hidden');
         renderLeaderboard();
+        if (!fromHistory) pushScreen('leaderboard');
     }
 
     function startQuiz() {
@@ -1207,6 +1237,7 @@
         streak = 0;
         updateHUD();
         loadQuestion();
+        pushScreen('quiz');
     }
 
     function loadQuestion() {
@@ -1392,6 +1423,7 @@
         else msgEl.textContent = "다음엔 더 잘할 수 있어요! 화이팅! 📖";
 
         saveScore(playerGroup, playerName, score);
+        pushScreen('gameover');
     }
 
     function showResult() {
@@ -1417,6 +1449,7 @@
         else msgEl.textContent = "간신히 살아남았네요! 대단해요! 🙏";
 
         saveScore(playerGroup, playerName, score);
+        pushScreen('result');
     }
 
     // 점수 카운트업 애니메이션

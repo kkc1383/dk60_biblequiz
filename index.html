@@ -541,6 +541,78 @@
             margin-right: 8px;
         }
 
+        /* 배점 안내 */
+        .scoring-info {
+            margin: 18px 0 8px;
+            padding: 14px 16px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .scoring-info-title {
+            font-size: 0.9rem;
+            font-weight: 900;
+            color: var(--primary-dark);
+            margin-bottom: 6px;
+        }
+        .scoring-info p {
+            font-size: 0.8rem;
+            color: #666;
+            margin: 3px 0;
+            line-height: 1.5;
+        }
+
+        /* 점수 비교 메시지 */
+        .score-comparison {
+            margin: 12px auto;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: inline-block;
+            animation: fadeInScale 0.5s ease-out;
+        }
+        .score-comparison.up {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .score-comparison.same {
+            background: #fff8e1;
+            color: #f57f17;
+        }
+        .score-comparison.down {
+            background: #f5f5f5;
+            color: #757575;
+        }
+        .score-comparison.first {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        /* 라이벌 토스트 */
+        .rival-toast {
+            position: fixed;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #222 0%, #444 100%);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 90vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .rival-toast.show {
+            bottom: 30px;
+        }
+
         /* 포스터 & 시작화면 */
         .poster-img {
             width: 100%;
@@ -718,6 +790,11 @@
             <p><strong>대상:</strong> 전교인 (유아부~장년부)</p>
             <p><strong>시상:</strong> 팀별시상, 개인 MVP 등 푸짐한 선물</p>
         </div>
+        <div class="scoring-info">
+            <div class="scoring-info-title">📊 배점 안내</div>
+            <p>난이도 하 100점 · 중 200점 · 상 300점</p>
+            <p>🔥 연속 정답 보너스: 2연속부터 연속 횟수×10점 추가 (최대 +100점)</p>
+        </div>
         <button class="btn btn-primary" onclick="showRegister()">퀴즈 참가하기</button>
         <button class="btn btn-secondary" style="margin-top:8px;" onclick="showLeaderboard()">리더보드 보기</button>
     </div>
@@ -797,6 +874,8 @@
         <div id="feedback" style="margin-top: 15px;"></div>
     </div>
 
+    <div id="rival-toast" class="rival-toast"></div>
+
     <!-- 게임오버 화면 -->
     <div id="gameover-screen" class="card hidden">
         <div class="gameover-emoji">💔</div>
@@ -804,6 +883,7 @@
         <p id="gameover-player-info"></p>
         <div class="gameover-score" id="gameover-score">0점</div>
         <p style="color:#666; margin: 10px 0;">목숨을 모두 잃었습니다!</p>
+        <div id="gameover-comparison"></div>
         <p id="gameover-message"></p>
         <button class="btn btn-share" onclick="shareResult('gameover')">결과 공유하기</button>
         <div class="btn-group">
@@ -817,6 +897,7 @@
         <h2>퀴즈 종료!</h2>
         <p id="result-player-info"></p>
         <div class="score-display" id="final-score">0점</div>
+        <div id="result-comparison"></div>
         <p id="result-message">말씀 안에 거하는 삶, 축복합니다!</p>
         <button class="btn btn-share" onclick="shareResult('result')">결과 공유하기</button>
         <div class="btn-group">
@@ -975,6 +1056,8 @@
     let isAnswering = true;
     let playerName = '';
     let playerGroup = '';
+    let previousScore = null;
+    let rivalData = [];
     let timer = null;
     let timeLeft = 0;
     let currentCorrectIndex = 0;
@@ -1202,7 +1285,7 @@
         if (!fromHistory) pushScreen('leaderboard');
     }
 
-    function startQuiz() {
+    async function startQuiz() {
         // 입력 검증
         const groupInput = document.getElementById('input-group');
         const nameInput = document.getElementById('input-name');
@@ -1225,6 +1308,25 @@
 
         playerGroup = groupInput.value;
         playerName = nameInput.value.trim();
+
+        // 이전 점수 & 라이벌 데이터 미리 fetch
+        try {
+            const docId = playerGroup + '_' + playerName;
+            const [prevDoc, rivalSnapshot] = await Promise.all([
+                db.collection('scores').doc(docId).get(),
+                db.collection('scores').orderBy('score', 'desc').limit(20).get()
+            ]);
+            previousScore = prevDoc.exists ? prevDoc.data().score : null;
+            rivalData = rivalSnapshot.docs.map(d => ({
+                name: d.data().name,
+                score: d.data().score,
+                group: d.data().group
+            }));
+        } catch (e) {
+            console.error('이전 기록/라이벌 로드 실패:', e);
+            previousScore = null;
+            rivalData = [];
+        }
 
         hideAllScreens();
         quizScreen.classList.remove('hidden');
@@ -1325,6 +1427,9 @@
 
         const streakMsg = streak >= 2 ? ` (${streak}연속! 🔥)` : '';
         feedbackEl.innerHTML = `<div class="feedback-correct">정답! +${points}점${streakMsg} (${currentData.ref})</div>`;
+
+        // 라이벌 체크
+        checkRival(points);
     }
 
     function handleWrong(currentData, correctText) {
@@ -1339,6 +1444,61 @@
         setTimeout(() => quizScreen.classList.remove('shake', 'bg-pulse-red'), 600);
 
         feedbackEl.innerHTML = `<div class="feedback-wrong">오답! 정답: ${correctText} (${currentData.ref})</div>`;
+    }
+
+    // ─── 라이벌 체크 ───
+    let rivalToastTimer = null;
+    function checkRival(earnedPoints) {
+        if (!rivalData.length) return;
+        // 본인 제외
+        const rivals = rivalData.filter(r => !(r.name === playerName && r.group === playerGroup));
+        if (!rivals.length) return;
+
+        const prevScore = score - earnedPoints;
+
+        // 현재 점수로 초월한 라이벌 찾기 (낮은 순위부터 탐색)
+        for (let i = rivals.length - 1; i >= 0; i--) {
+            const r = rivals[i];
+            if (score >= r.score && prevScore < r.score) {
+                const rank = i + 1;
+                showRivalToast(`🔥 ${r.name}님(${rank}위) 초월! 현재 ${rank > 1 ? rank - 1 : 1}위!`);
+                return;
+            }
+        }
+
+        // 다음 문제 최소 점수(100점)만 맞추면 초월 가능한 라이벌
+        for (let i = rivals.length - 1; i >= 0; i--) {
+            const r = rivals[i];
+            if (r.score > score && r.score <= score + 100) {
+                const rank = i + 1;
+                showRivalToast(`💪 이것만 맞추면 ${r.name}님(${rank}위) 초월!`);
+                return;
+            }
+        }
+    }
+
+    function showRivalToast(message) {
+        const toast = document.getElementById('rival-toast');
+        clearTimeout(rivalToastTimer);
+        toast.textContent = message;
+        toast.classList.add('show');
+        rivalToastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // ─── 점수 비교 메시지 생성 ───
+    function getComparisonHTML(currentScore) {
+        if (previousScore === null) {
+            return '<div class="score-comparison first">⭐ 첫 도전! 기록이 등록됩니다!</div>';
+        } else if (currentScore > previousScore) {
+            const diff = currentScore - previousScore;
+            return `<div class="score-comparison up">📈 이전 기록보다 +${diff}점 올랐어요! 🎉</div>`;
+        } else if (currentScore === previousScore) {
+            return '<div class="score-comparison same">➡️ 이전과 동일한 점수예요!</div>';
+        } else {
+            return `<div class="score-comparison down">📊 이전 기록: ${previousScore}점 (최고 기록은 유지됩니다)</div>`;
+        }
     }
 
     // 객관식 정답 확인
@@ -1406,6 +1566,10 @@
     }
 
     function showGameOver() {
+        // 라이벌 토스트 숨기기
+        clearTimeout(rivalToastTimer);
+        document.getElementById('rival-toast').classList.remove('show');
+
         hideAllScreens();
         gameoverScreen.classList.remove('hidden');
         gameoverScreen.classList.add('card-enter');
@@ -1418,6 +1582,11 @@
         const scoreEl = document.getElementById('gameover-score');
         animateScoreCount(scoreEl, score);
 
+        // 이전 기록 비교 메시지
+        setTimeout(() => {
+            document.getElementById('gameover-comparison').innerHTML = getComparisonHTML(score);
+        }, 1300);
+
         const msgEl = document.getElementById('gameover-message');
         if (score > 0) msgEl.textContent = "아깝네요! 다시 도전해보세요! 💪";
         else msgEl.textContent = "다음엔 더 잘할 수 있어요! 화이팅! 📖";
@@ -1427,6 +1596,10 @@
     }
 
     function showResult() {
+        // 라이벌 토스트 숨기기
+        clearTimeout(rivalToastTimer);
+        document.getElementById('rival-toast').classList.remove('show');
+
         hideAllScreens();
         resultScreen.classList.remove('hidden');
         resultScreen.classList.add('card-enter');
@@ -1442,6 +1615,11 @@
         // 완주 축하 파티클
         setTimeout(() => spawnParticles(), 500);
         setTimeout(() => spawnParticles(), 1000);
+
+        // 이전 기록 비교 메시지
+        setTimeout(() => {
+            document.getElementById('result-comparison').innerHTML = getComparisonHTML(score);
+        }, 1300);
 
         const msgEl = document.getElementById('result-message');
         if (lives === 3) msgEl.textContent = "완벽합니다! 목숨을 하나도 안 잃었어요! 🎉";
@@ -1481,6 +1659,9 @@
     }
 
     function restartQuiz() {
+        // 이전 비교 메시지 초기화
+        document.getElementById('gameover-comparison').innerHTML = '';
+        document.getElementById('result-comparison').innerHTML = '';
         hideAllScreens();
         registerScreen.classList.remove('hidden');
     }
@@ -1539,11 +1720,16 @@
         return d.innerHTML;
     }
 
-    function saveScore(group, name, score) {
-        db.collection('scores').add({
+    function saveScore(group, name, newScore) {
+        var docId = group + '_' + name;
+        // 이전 기록보다 높을 때만 덮어쓰기 (최고 기록 보존)
+        if (previousScore !== null && newScore <= previousScore) {
+            return;
+        }
+        db.collection('scores').doc(docId).set({
             group: group,
             name: name,
-            score: score,
+            score: newScore,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).catch(function(error) {
             console.error('점수 저장 실패:', error);

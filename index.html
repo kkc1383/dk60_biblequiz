@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동광교회 60주년 성경퀴즈대회</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-orange: #F5A623;
+            --primary-purple: #6A1B9A;
+            --gradient-main: linear-gradient(135deg, #F5A623 0%, #E91E63 50%, #6A1B9A 100%);
+            --text-dark: #333333;
+            --text-light: #ffffff;
+            --bg-light: #f9f9f9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* 레이아웃 컨테이너 */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 헤더 & 로고 */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo-img {
+            max-width: 250px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        /* 카드 스타일 */
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--gradient-main);
+            color: white;
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-option {
+            background: #fff;
+            border: 2px solid #ddd;
+            color: var(--text-dark);
+        }
+        .btn-option:hover {
+            border-color: var(--primary-orange);
+            background: #fff8e1;
+        }
+
+        /* 퀴즈 화면 요소 */
+        .hidden { display: none; }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-main);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            word-break: keep-all;
+        }
+        .input-answer {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #eee;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        /* 입력 폼 스타일 */
+        .form-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-dark);
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+        }
+        .form-error {
+            color: #F44336;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: none;
+        }
+
+        /* 결과 화면 */
+        .score-display {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-purple);
+            margin: 20px 0;
+        }
+        .feedback-correct { color: #4CAF50; font-weight: bold; margin-bottom: 10px; }
+        .feedback-wrong { color: #F44336; font-weight: bold; margin-bottom: 10px; }
+
+        /* 리더보드 */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+        .leaderboard-table th {
+            background: var(--gradient-main);
+            color: white;
+            padding: 10px 8px;
+            font-weight: 700;
+        }
+        .leaderboard-table th:first-child { border-radius: 10px 0 0 0; }
+        .leaderboard-table th:last-child { border-radius: 0 10px 0 0; }
+        .leaderboard-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+        .leaderboard-table tr:hover td {
+            background: #fff8e1;
+        }
+        .leaderboard-table .rank-1 td { background: #fff3cd; font-weight: 700; }
+        .leaderboard-table .rank-2 td { background: #f0f0f0; }
+        .leaderboard-table .rank-3 td { background: #fde8d0; }
+        .medal { font-size: 1.2rem; }
+        .leaderboard-empty {
+            color: #999;
+            padding: 30px 0;
+            font-size: 0.95rem;
+        }
+        .btn-secondary {
+            background: white;
+            border: 2px solid var(--primary-purple);
+            color: var(--primary-purple);
+            box-shadow: none;
+        }
+        .btn-secondary:hover {
+            background: #f3e5f5;
+            transform: translateY(-2px);
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-group .btn { flex: 1; }
+        .church-logo {
+            width: 50px;
+            height: auto;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <img src="logo.png" alt="동광교회 60주년 로고" class="logo-img">
+        <h1 class="title">전교인 성경퀴즈대회</h1>
+        <p>학개 / 스가랴 / 에스라 / 느헤미야</p>
+    </header>
+
+    <!-- 1. 시작 화면 -->
+    <div id="start-screen" class="card">
+        <h2>환영합니다!</h2>
+        <p style="margin: 20px 0; color: #666;">
+            동광교회 60주년을 기념하여<br>성경 지식을 함께 나누는 시간입니다.<br>
+            준비되셨나요?
+        </p>
+        <button class="btn btn-primary" onclick="showRegister()">참가하기</button>
+        <button class="btn btn-secondary" style="margin-top:8px;" onclick="showLeaderboard()">리더보드 보기</button>
+    </div>
+
+    <!-- 2. 소속/이름 입력 화면 -->
+    <div id="register-screen" class="card hidden">
+        <h2><img src="churchlogo.png" alt="교회 로고" class="church-logo">참가자 등록</h2>
+        <p style="margin: 15px 0 20px; color: #666;">소속과 이름을 입력해주세요.</p>
+        <div class="form-group">
+            <label for="input-group">소속 (부서/구역)</label>
+            <input type="text" id="input-group" class="form-input" placeholder="예: 청년부, 1구역">
+            <div class="form-error" id="error-group">소속을 입력해주세요.</div>
+        </div>
+        <div class="form-group">
+            <label for="input-name">이름</label>
+            <input type="text" id="input-name" class="form-input" placeholder="예: 홍길동">
+            <div class="form-error" id="error-name">이름을 입력해주세요.</div>
+        </div>
+        <button class="btn btn-primary" onclick="startQuiz()">퀴즈 시작하기</button>
+    </div>
+
+    <div id="quiz-screen" class="card hidden">
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <div class="badge" id="category-badge">난이도: 하</div>
+        <div class="question-text" id="question">문제 내용이 여기에 나옵니다.</div>
+        
+        <div id="options-container"></div>
+        
+        <div id="input-container" class="hidden">
+            <input type="text" id="subjective-answer" class="input-answer" placeholder="정답을 입력하세요">
+            <button class="btn btn-primary" onclick="submitSubjective()">제출</button>
+        </div>
+
+        <div id="feedback" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- 4. 결과 화면 -->
+    <div id="result-screen" class="card hidden">
+        <h2>퀴즈 종료!</h2>
+        <p id="result-player-info"></p>
+        <div class="score-display" id="final-score">0점</div>
+        <p id="result-message">말씀 안에 거하는 삶, 축복합니다!</p>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="restartQuiz()">다시 도전하기</button>
+            <button class="btn btn-secondary" onclick="showLeaderboard()">리더보드</button>
+        </div>
+    </div>
+
+    <!-- 5. 리더보드 화면 -->
+    <div id="leaderboard-screen" class="card hidden">
+        <h2>리더보드</h2>
+        <p style="margin: 10px 0; color: #666;">상위 기록을 확인하세요!</p>
+        <div id="leaderboard-content"></div>
+        <button class="btn btn-primary" style="margin-top: 20px;" onclick="showStart()">처음으로</button>
+    </div>
+</div>
+
+<script>
+    // PDF 문제 데이터 (샘플 추출)
+    const quizData = [
+        // 학개
+        {
+            category: "학개",
+            level: "하",
+            type: "subjective",
+            question: "학개 선지자가 하나님의 말씀을 전할 때, 당시 유다의 총독은 누구였습니까?",
+            answer: ["스룹바벨"],
+            ref: "학 1:1"
+        },
+        {
+            category: "학개",
+            level: "하",
+            type: "objective",
+            question: "학개 선지자가 사역하던 시기의 바사(페르시아) 왕은 누구입니까?",
+            options: ["고레스", "다리오", "아닥사스다", "아하수에로"],
+            answer: 1, // 0부터 시작하는 인덱스 (다리오 = 2번 = 인덱스 1)
+            ref: "학 1:1"
+        },
+        // 스가랴
+        {
+            category: "스가랴",
+            level: "중",
+            type: "objective",
+            question: "스가랴 9장에서 예루살렘의 왕은 겸손하여서 '이것'을 타고 입성하신다고 예언되었습니다. 이것은 무엇입니까?",
+            options: ["백마", "병거", "나귀", "낙타"],
+            answer: 2,
+            ref: "슥 9:9"
+        },
+        // 에스라
+        {
+            category: "에스라",
+            level: "상",
+            type: "subjective",
+            question: "고레스 왕이 내어준 성전 기명(그릇) 중 '금 접시'의 개수는 정확히 몇 개였습니까? (숫자만 입력)",
+            answer: ["30", "30개", "삼십", "삼십개"],
+            ref: "에 1:9"
+        },
+        // 느헤미야
+        {
+            category: "느헤미야",
+            level: "하",
+            type: "objective",
+            question: "느헤미야와 백성들이 예루살렘 성벽을 완공하는 데 걸린 시간은 며칠입니까?",
+            options: ["40일", "52일", "70일", "120일"],
+            answer: 1,
+            ref: "느 6:15"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let isAnswering = true;
+    let playerName = '';
+    let playerGroup = '';
+
+    const startScreen = document.getElementById('start-screen');
+    const registerScreen = document.getElementById('register-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const leaderboardScreen = document.getElementById('leaderboard-screen');
+    const questionEl = document.getElementById('question');
+    const optionsContainer = document.getElementById('options-container');
+    const inputContainer = document.getElementById('input-container');
+    const badgeEl = document.getElementById('category-badge');
+    const progressBar = document.getElementById('progress');
+    const feedbackEl = document.getElementById('feedback');
+
+    function hideAllScreens() {
+        [startScreen, registerScreen, quizScreen, resultScreen, leaderboardScreen]
+            .forEach(s => s.classList.add('hidden'));
+    }
+
+    function showRegister() {
+        hideAllScreens();
+        registerScreen.classList.remove('hidden');
+        document.getElementById('input-group').focus();
+    }
+
+    function showStart() {
+        hideAllScreens();
+        startScreen.classList.remove('hidden');
+    }
+
+    function showLeaderboard() {
+        hideAllScreens();
+        leaderboardScreen.classList.remove('hidden');
+        renderLeaderboard();
+    }
+
+    function startQuiz() {
+        // 입력 검증
+        const groupInput = document.getElementById('input-group');
+        const nameInput = document.getElementById('input-name');
+        const errorGroup = document.getElementById('error-group');
+        const errorName = document.getElementById('error-name');
+
+        let valid = true;
+        errorGroup.style.display = 'none';
+        errorName.style.display = 'none';
+
+        if (!groupInput.value.trim()) {
+            errorGroup.style.display = 'block';
+            valid = false;
+        }
+        if (!nameInput.value.trim()) {
+            errorName.style.display = 'block';
+            valid = false;
+        }
+        if (!valid) return;
+
+        playerGroup = groupInput.value.trim();
+        playerName = nameInput.value.trim();
+
+        hideAllScreens();
+        quizScreen.classList.remove('hidden');
+        currentQuestionIndex = 0;
+        score = 0;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        isAnswering = true;
+        feedbackEl.innerHTML = "";
+        document.getElementById('subjective-answer').value = "";
+        
+        const currentData = quizData[currentQuestionIndex];
+        
+        // 진행률 업데이트
+        const progressPercent = ((currentQuestionIndex) / quizData.length) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+
+        // 문제 세팅
+        badgeEl.textContent = `${currentData.category} | 난이도: ${currentData.level}`;
+        questionEl.textContent = `Q${currentQuestionIndex + 1}. ${currentData.question}`;
+
+        // 타입별 UI 분기
+        if (currentData.type === 'objective') {
+            optionsContainer.classList.remove('hidden');
+            inputContainer.classList.add('hidden');
+            optionsContainer.innerHTML = '';
+            
+            currentData.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-option';
+                btn.textContent = `${index + 1}. ${option}`;
+                btn.onclick = () => checkAnswer(index);
+                optionsContainer.appendChild(btn);
+            });
+        } else {
+            optionsContainer.classList.add('hidden');
+            inputContainer.classList.remove('hidden');
+        }
+    }
+
+    // 객관식 정답 확인
+    function checkAnswer(selectedIndex) {
+        if (!isAnswering) return;
+        isAnswering = false;
+
+        const currentData = quizData[currentQuestionIndex];
+        const buttons = optionsContainer.getElementsByTagName('button');
+
+        if (selectedIndex === currentData.answer) {
+            score += 20; // 문제당 20점 (5문제 기준)
+            buttons[selectedIndex].style.background = "#d4edda";
+            buttons[selectedIndex].style.borderColor = "#c3e6cb";
+            feedbackEl.innerHTML = `<div class="feedback-correct">정답입니다! (${currentData.ref})</div>`;
+        } else {
+            buttons[selectedIndex].style.background = "#f8d7da";
+            buttons[selectedIndex].style.borderColor = "#f5c6cb";
+            buttons[currentData.answer].style.background = "#d4edda"; // 정답 표시
+            feedbackEl.innerHTML = `<div class="feedback-wrong">오답입니다. 정답은 ${currentData.options[currentData.answer]} (${currentData.ref})</div>`;
+        }
+
+        setTimeout(nextQuestion, 2000);
+    }
+
+    // 주관식 정답 확인
+    function submitSubjective() {
+        if (!isAnswering) return;
+        isAnswering = false;
+
+        const input = document.getElementById('subjective-answer');
+        const userValue = input.value.trim().replace(/\s/g, ''); // 공백 제거 후 비교
+        const currentData = quizData[currentQuestionIndex];
+        
+        // 정답 배열 중 하나라도 맞으면 정답 처리
+        const isCorrect = currentData.answer.some(ans => userValue.includes(ans) || ans === userValue);
+
+        if (isCorrect) {
+            score += 20;
+            feedbackEl.innerHTML = `<div class="feedback-correct">정답입니다! (${currentData.ref})</div>`;
+        } else {
+            feedbackEl.innerHTML = `<div class="feedback-wrong">오답입니다. 정답: ${currentData.answer[0]} (${currentData.ref})</div>`;
+        }
+
+        setTimeout(nextQuestion, 2000);
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        hideAllScreens();
+        resultScreen.classList.remove('hidden');
+
+        document.getElementById('result-player-info').textContent =
+            `${playerGroup} · ${playerName}님, 수고하셨습니다!`;
+
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.textContent = `${score}점`;
+
+        const msgEl = document.getElementById('result-message');
+        if(score === 100) msgEl.textContent = "대단합니다! 성경 박사님이시네요! 🎉";
+        else if(score >= 60) msgEl.textContent = "참 잘하셨습니다! 말씀과 더욱 가까워지세요. 🙏";
+        else msgEl.textContent = "아쉽네요! 다시 한번 도전해보세요. 💪";
+
+        // 리더보드에 점수 저장
+        saveScore(playerGroup, playerName, score);
+    }
+
+    function restartQuiz() {
+        hideAllScreens();
+        registerScreen.classList.remove('hidden');
+    }
+
+    // ─── 리더보드 (localStorage) ───
+    function getLeaderboard() {
+        const data = localStorage.getItem('bibleQuizLeaderboard');
+        return data ? JSON.parse(data) : [];
+    }
+
+    function saveScore(group, name, score) {
+        const board = getLeaderboard();
+        board.push({
+            group,
+            name,
+            score,
+            date: new Date().toLocaleDateString('ko-KR')
+        });
+        // 점수 내림차순 정렬, 동점이면 최신 기록 우선
+        board.sort((a, b) => b.score - a.score);
+        // 최대 50개만 보관
+        if (board.length > 50) board.length = 50;
+        localStorage.setItem('bibleQuizLeaderboard', JSON.stringify(board));
+    }
+
+    function renderLeaderboard() {
+        const board = getLeaderboard();
+        const container = document.getElementById('leaderboard-content');
+
+        if (board.length === 0) {
+            container.innerHTML = '<div class="leaderboard-empty">아직 기록이 없습니다.<br>첫 번째 도전자가 되어보세요!</div>';
+            return;
+        }
+
+        const medals = ['🥇', '🥈', '🥉'];
+        let html = `<table class="leaderboard-table">
+            <thead><tr>
+                <th>순위</th><th>소속</th><th>이름</th><th>점수</th><th>날짜</th>
+            </tr></thead><tbody>`;
+
+        board.slice(0, 20).forEach((entry, i) => {
+            const rankClass = i < 3 ? ` class="rank-${i + 1}"` : '';
+            const rankText = i < 3 ? `<span class="medal">${medals[i]}</span>` : (i + 1);
+            html += `<tr${rankClass}>
+                <td>${rankText}</td>
+                <td>${entry.group}</td>
+                <td>${entry.name}</td>
+                <td><strong>${entry.score}점</strong></td>
+                <td>${entry.date}</td>
+            </tr>`;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+</script>
+
+</body>
+</html>

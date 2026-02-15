@@ -1458,10 +1458,10 @@
 
         // 부서원 자극 멘트
         const taunts = [
-            `${playerGroup}의 자존심을 걸고 ${score}점 달성! 이 점수 넘을 부서원 어디 없나요?`,
-            `${playerGroup}에서 ${score}점이면 좀 치는 건가요? 우리 부서 실력 보여주자!`,
-            `${playerGroup} 부서원들! 나 ${score}점 나왔다~ 이거 이길 자신 있어?`,
-            `${playerGroup} 대표로 ${score}점 찍었습니다! 부서 총점 올리러 당장 도전하세요!`
+            `${playerGroup}에서 ${score}점을 받았습니다! 함께 도전하셔서 우리 부서 총점을 올려봐요!`,
+            `${playerGroup} 여러분, 저도 도전해봤습니다! 다 같이 참여해서 좋은 결과 만들어봐요!`,
+            `${playerGroup} 식구들 모두 함께해요! 말씀 퀴즈로 은혜도 받고 부서 순위도 올려봐요!`,
+            `${playerGroup}의 한 사람으로서 ${score}점에 도전했습니다! 여러분도 함께 응원해주세요!`
         ];
         const taunt = taunts[Math.floor(Math.random() * taunts.length)];
 
@@ -1472,7 +1472,7 @@
                 + `📖 ${playerName} (${playerGroup})\n`
                 + `💯 ${score}점\n`
                 + `❤️ 목숨 소진으로 게임오버!\n\n`
-                + `👉 너도 도전해봐! 부서 순위를 올려보자!\n`
+                + `👉 여러분도 함께 도전해보세요!\n`
                 + `${location.href}`;
         } else {
             const livesEmoji = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
@@ -1481,7 +1481,7 @@
                 + `📖 ${playerName} (${playerGroup})\n`
                 + `💯 ${score}점 | ${livesEmoji}\n`
                 + `✅ 전 ${total}문제 완주!\n\n`
-                + `👉 너도 도전해봐! 부서 순위를 올려보자!\n`
+                + `👉 여러분도 함께 도전해보세요!\n`
                 + `${location.href}`;
         }
 

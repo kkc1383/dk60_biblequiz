@@ -1546,7 +1546,11 @@
             const snapshot = await db.collection('scores').get();
 
             if (snapshot.empty) {
-                container.innerHTML = '<div class="leaderboard-empty">아직 기록이 없습니다.<br>첫 번째 도전자가 되어보세요!</div>';
+                container.innerHTML = '<div class="leaderboard-empty">'
+                    + '🏅 아직 어떤 부서도 참여하지 않았습니다!<br><br>'
+                    + '<strong>우리 부서가 첫 번째로 이름을 올려볼까요?</strong><br><br>'
+                    + '<span style="font-size:0.85rem; color:#888;">부서원 모두 함께 참여하면 총점이 올라갑니다!</span>'
+                    + '</div>';
                 return;
             }
 
@@ -1607,7 +1611,12 @@
                 .get();
 
             if (snapshot.empty) {
-                container.innerHTML = '<div class="leaderboard-empty">아직 기록이 없습니다.<br>첫 번째 도전자가 되어보세요!</div>';
+                container.innerHTML = '<div class="leaderboard-empty">'
+                    + '📖 아직 아무도 도전하지 않았습니다!<br><br>'
+                    + '🏆 <strong>1등의 자리가 비어있습니다</strong><br>'
+                    + '지금 도전하시면 바로 1등이에요!<br><br>'
+                    + '<span style="font-size:0.85rem; color:#888;">우리 부서의 첫 번째 점수를 올려주세요!</span>'
+                    + '</div>';
                 return;
             }
 

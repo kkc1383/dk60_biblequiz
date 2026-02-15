@@ -1092,7 +1092,6 @@
     let score = 0;
     let lives = 3;
     let streak = 0;
-    let answeredCorrectly = new Set(); // 이번 세션에서 맞춘 문제 인덱스
     let isAnswering = true;
     let playerName = '';
     let playerGroup = '';
@@ -1586,26 +1585,7 @@
         quizScreen.classList.remove('hidden');
         quizScreen.classList.add('card-enter');
         setTimeout(() => quizScreen.classList.remove('card-enter'), 400);
-        // 이전에 맞춘 문제 불러오기 & 필터링
-        const storageKey = `answered_${playerGroup}_${playerName}`;
-        let savedAnswered = [];
-        try { savedAnswered = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e) {}
-        answeredCorrectly = new Set(savedAnswered);
-
-        const unanswered = quizData.filter(q => !answeredCorrectly.has(q.question));
-        if (unanswered.length === 0) {
-            // 모든 문제를 맞춘 경우 → 전체 리셋
-            answeredCorrectly = new Set();
-            localStorage.removeItem(storageKey);
-            shuffledQuiz = shuffleArray(quizData);
-            showRivalToast('🎊 모든 문제를 맞춘 적 있어요! 전체 문제로 재도전!');
-        } else {
-            shuffledQuiz = shuffleArray(unanswered);
-            if (savedAnswered.length > 0) {
-                showRivalToast(`📋 이전에 맞춘 ${savedAnswered.length}문제 제외! 남은 ${unanswered.length}문제 도전!`);
-            }
-        }
-
+        shuffledQuiz = shuffleArray(quizData);
         currentQuestionIndex = 0;
         score = 0;
         lives = 3;
@@ -1674,13 +1654,6 @@
         score += points;
         showScoreFloat(points);
         updateHUD();
-
-        // 맞춘 문제 기록 (다음에 안 나오게)
-        answeredCorrectly.add(currentData.question);
-        try {
-            const storageKey = `answered_${playerGroup}_${playerName}`;
-            localStorage.setItem(storageKey, JSON.stringify([...answeredCorrectly]));
-        } catch(e) {}
 
         // 카드 테두리 초록 펄스
         quizScreen.classList.remove('bg-pulse-green');

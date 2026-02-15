@@ -796,10 +796,9 @@
     }
 
     function calcPoints(level) {
-        const levelBonus = level === '상' ? 30 : level === '중' ? 20 : 10;
-        const streakBonus = streak >= 2 ? streak * 5 : 0;
-        const timeBonus = Math.floor(timeLeft / 2);
-        return levelBonus + streakBonus + timeBonus;
+        const base = level === '상' ? 300 : level === '중' ? 200 : 100;
+        const streakBonus = streak >= 2 ? Math.min(streak, 10) * 10 : 0;
+        return base + streakBonus;
     }
 
     function startTimer(type) {
@@ -1021,7 +1020,10 @@
         const currentData = shuffledQuiz[currentQuestionIndex];
         const isCorrect = currentData.answer.some(ans => {
             const normAns = ans.replace(/\s/g, '');
-            return userValue === normAns;
+            if (userValue === normAns) return true;
+            // 3글자 이상 답은 포함 관계로 관대하게 처리
+            if (normAns.length >= 3 && userValue.includes(normAns)) return true;
+            return false;
         });
 
         if (isCorrect) {

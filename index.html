@@ -443,6 +443,44 @@
         }
         .feedback-correct { color: #4CAF50; font-weight: bold; margin-bottom: 10px; }
         .feedback-wrong { color: #F44336; font-weight: bold; margin-bottom: 10px; }
+        .feedback-record { color: #FF6F00; font-size: 1.05em; animation: recordPulse 0.6s ease-in-out 2; }
+        @keyframes recordPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 기록 경신 힌트 */
+        .record-hint {
+            text-align: center;
+            padding: 6px 14px;
+            margin-bottom: 8px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+            color: #E65100;
+            border: 1.5px solid #FFD54F;
+            animation: hintSlide 0.4s ease-out;
+        }
+        .record-hint.hidden { display: none; }
+        .record-hint.record-close {
+            background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+            border-color: #FF9800;
+            animation: hintSlide 0.4s ease-out, hintGlow 1.5s ease-in-out infinite;
+        }
+        .record-hint.record-breaking {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            color: #2E7D32;
+            border-color: #66BB6A;
+            animation: hintSlide 0.4s ease-out;
+        }
+        @keyframes hintSlide {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes hintGlow {
+            0%, 100% { box-shadow: 0 0 4px rgba(255,152,0,0.2); }
+            50% { box-shadow: 0 0 12px rgba(255,152,0,0.5); }
+        }
 
         /* 리더보드 */
         .leaderboard-table {
@@ -861,6 +899,7 @@
         <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
         <div class="timer-text green" id="timer-text">15</div>
         <div class="timer-bar"><div class="timer-fill green" id="timer-fill"></div></div>
+        <div id="record-hint" class="record-hint hidden"></div>
         <div class="badge" id="category-badge">난이도: 하</div>
         <div class="question-text" id="question">문제 내용이 여기에 나옵니다.</div>
 
@@ -1053,6 +1092,7 @@
     let score = 0;
     let lives = 3;
     let streak = 0;
+    let answeredCorrectly = new Set(); // 이번 세션에서 맞춘 문제 인덱스
     let isAnswering = true;
     let playerName = '';
     let playerGroup = '';
@@ -1119,26 +1159,22 @@
 
     // ─── 피드백 메시지 바리에이션 ───
     const correctMessages = [
-        "정답! 👏",
-        "맞았습니다! ✨",
-        "정확해요! 👍",
-        "훌륭합니다! 🌟",
-        "대단해요! 💯",
-        "완벽해요! ⭐",
-        "바로 그거예요! 🎯",
-        "역시 실력자! 💪",
-        "성경 박사시네요! 📖",
-        "놀라운 지식이에요! 🧠",
-        "하나님의 말씀을 잘 아시네요! ✝️",
-        "은혜로운 정답! 🙏",
-        "멋져요! 🎉",
-        "빙고! 정답! 🔔",
-        "척척 맞추시네요! 😎",
-        "감탄이 나옵니다! 👏",
-        "말씀 묵상의 열매네요! 🌿",
-        "정답! 지혜가 넘치시네요! 📜",
-        "우와, 대단합니다! 🤩",
-        "맞았어요! 계속 이 기세로! 🚀",
+        "정답! 👏", "맞았습니다! ✨", "정확해요! 👍", "훌륭합니다! 🌟",
+        "대단해요! 💯", "완벽해요! ⭐", "바로 그거예요! 🎯", "역시 실력자! 💪",
+        "성경 박사시네요! 📖", "놀라운 지식이에요! 🧠", "하나님 말씀을 잘 아시네요! ✝️",
+        "은혜로운 정답! 🙏", "멋져요! 🎉", "빙고! 정답! 🔔", "척척 맞추시네요! 😎",
+        "감탄이 나옵니다! 👏", "말씀 묵상의 열매네요! 🌿", "지혜가 넘치시네요! 📜",
+        "우와, 대단합니다! 🤩", "맞았어요! 이 기세로! 🚀",
+        "천재 아닌가요?! 🧑‍🎓", "이건 좀 아는 사람이네요! 🤓",
+        "성경 퀴즈왕 등극! 👑", "감히 이걸 맞추다니! 🏆",
+        "신의 한 수! ♟️", "말씀이 마음에 새겨져 있군요! 💎",
+        "QT의 힘이 느껴집니다! 📕", "주일학교 선생님 하셔도 되겠어요! 🎒",
+        "오늘의 MVP! 🥇", "이 정도면 목사님급! ⛪",
+        "성경통독 몇 번 하신 거예요?! 📚", "할렐루야! 정답! 🎶",
+        "아멘! 맞았습니다! 🙌", "와 진짜 잘하시네요! 🫢",
+        "이 문제 어려웠는데... 대단해요! 😲", "설마 다 외우신 건 아니죠?! 🤭",
+        "정답의 달인! 🎪", "역시 믿음의 사람! ✨", "혹시 신학과?! 🎓",
+        "끝까지 집중하시네요! 🔥",
     ];
 
     const correctBibleVerses = [
@@ -1152,29 +1188,39 @@
         "\"두려워하지 말라 내가 너와 함께 함이라\" (사 41:10)",
         "\"나의 은혜가 네게 족하도다\" (고후 12:9)",
         "\"모든 지각에 뛰어난 하나님의 평강이 너희를 지키시리라\" (빌 4:7)",
+        "\"여호와를 기뻐하라 그가 네 마음의 소원을 이루어 주시리로다\" (시 37:4)",
+        "\"내가 세상 끝날까지 너희와 항상 함께 있으리라\" (마 28:20)",
+        "\"사랑은 오래 참고 온유하며\" (고전 13:4)",
+        "\"감사함으로 그 문에 들어가며 찬송함으로 그 궁정에 들어가라\" (시 100:4)",
+        "\"여호와는 나의 빛이요 나의 구원이시라\" (시 27:1)",
+        "\"너는 내게 부르짖으라 내가 네게 응답하겠고\" (렘 33:3)",
+        "\"여호와의 말씀은 순전하여 은같이 빛나도다\" (시 12:6)",
+        "\"주의 말씀은 내 발에 등이요 내 길에 빛이니이다\" (시 119:105)",
+        "\"할 수 있거든이 무슨 말이냐 믿는 자에게는 능히 하지 못할 일이 없느니라\" (막 9:23)",
+        "\"하나님이 세상을 이처럼 사랑하사\" (요 3:16)",
     ];
 
     const wrongMessages = [
-        "아쉽네요! 😅",
-        "아깝다! 다음엔 맞춰봐요! 💪",
-        "아차! 😮",
-        "괜찮아요, 다음 기회가 있어요! 🙂",
-        "틀렸지만 배움이 있어요! 📚",
-        "이런! 아쉬워요! 😥",
-        "다음엔 꼭 맞출 수 있어요! 💪",
-        "실수는 성장의 기회예요! 🌱",
-        "한 번 더 기억해봐요! 🧠",
-        "가까웠어요! 조금만 더! 👊",
-        "아쉽지만 포기하지 마세요! 🔥",
-        "이것도 하나의 배움이에요! ✏️",
-        "다음엔 분명 맞출 거예요! ⭐",
-        "오답도 실력의 일부! 📈",
-        "말씀을 더 묵상해봐요! 📖",
-        "이번 기회로 기억해두세요! 💡",
-        "괜찮아요! 끝까지 화이팅! 🏃",
-        "넘어져도 다시 일어나면 돼요! 🌈",
-        "아쉽네요~ 정답을 확인해봐요! 🔍",
+        "아쉽네요! 😅", "아깝다! 다음엔 맞춰봐요! 💪", "아차! 😮",
+        "괜찮아요, 다음 기회가 있어요! 🙂", "틀렸지만 배움이 있어요! 📚",
+        "이런! 아쉬워요! 😥", "다음엔 꼭 맞출 수 있어요! 💪",
+        "실수는 성장의 기회예요! 🌱", "한 번 더 기억해봐요! 🧠",
+        "가까웠어요! 조금만 더! 👊", "아쉽지만 포기하지 마세요! 🔥",
+        "이것도 하나의 배움이에요! ✏️", "다음엔 분명 맞출 거예요! ⭐",
+        "오답도 실력의 일부! 📈", "말씀을 더 묵상해봐요! 📖",
+        "이번 기회로 기억해두세요! 💡", "괜찮아요! 끝까지 화이팅! 🏃",
+        "넘어져도 다시 일어나면 돼요! 🌈", "아쉽네요~ 정답을 확인해봐요! 🔍",
         "오답 노트에 적어두세요! 📝",
+        "이 문제 어렵긴 했어요! 😤", "누구나 실수할 수 있어요! 🤗",
+        "다음 문제에서 만회하세요! 💨", "아쉽지만 좋은 경험이에요! 🎯",
+        "이제 이건 절대 안 틀리겠죠?! 😉", "오히려 기억에 더 남을 거예요! 🧩",
+        "이런 문제도 있었군요! 📌", "공부가 됐다고 생각하면 돼요! 🤓",
+        "다음에 또 나오면 무조건 맞춰요! ✊", "아직 기회는 남아있어요! 🌤️",
+        "끝까지 집중! 만회할 수 있어요! 🔋", "이건 좀 어려웠죠? 괜찮아요! 😊",
+        "흔들리지 마세요! 아직 갈 길이 있어요! 🛤️", "실수해도 괜찮아, 다시 도전! 🔄",
+        "이런 경험이 실력을 만들어요! 🏗️", "포기란 없다! 파이팅! 💥",
+        "하나 틀렸다고 무너지지 마세요! 🏰", "다음 문제는 자신 있죠?! 😏",
+        "이건 나중에 다시 복습! 🔁", "틀린 만큼 더 강해져요! 💪",
     ];
 
     const wrongBibleVerses = [
@@ -1186,36 +1232,137 @@
         "\"여호와를 앙망하는 자는 새 힘을 얻으리니\" (사 40:31)",
         "\"환난은 인내를, 인내는 연단을, 연단은 소망을 이루는 줄 앎이로다\" (롬 5:3-4)",
         "\"선을 행하되 낙심하지 말지니\" (갈 6:9)",
+        "\"우리가 선을 행하되 낙심하지 말지니 포기하지 아니하면 때가 이르매 거두리라\" (갈 6:9)",
+        "\"나를 강하게 하신 이 안에서 내가 모든 것을 할 수 있느니라\" (빌 4:13)",
+        "\"수고하고 무거운 짐 진 자들아 다 내게로 오라 내가 너희를 쉬게 하리라\" (마 11:28)",
+        "\"이 모든 일에 우리를 사랑하시는 이로 말미암아 넉넉히 이기느니라\" (롬 8:37)",
+        "\"나의 계획은 평안이요 재앙이 아니니라\" (렘 29:11)",
+        "\"두려워하지 말라 내가 너를 구속하였고 너를 지명하여 불렀나니\" (사 43:1)",
+        "\"의인은 넘어질지라도 다시 일어나려니와\" (잠 24:16)",
     ];
 
     const timeUpMessages = [
-        "시간 초과! ⏰",
-        "시간이 다 됐어요! ⏳",
-        "시간 오버! 조금만 더 빨랐으면! 😅",
-        "앗, 시간이! ⏱️",
-        "시간 초과! 다음엔 더 빠르게! 💨",
-        "아쉽게 시간이 지났어요! ⌛",
-        "조금만 더 빨랐으면! 🏃",
-        "시간 초과! 서두르세요! ⚡",
-        "타임아웃! 다음엔 파이팅! 🔔",
-        "시간이 부족했네요! ⏰",
+        "시간 초과! ⏰", "시간이 다 됐어요! ⏳",
+        "시간 오버! 조금만 더 빨랐으면! 😅", "앗, 시간이! ⏱️",
+        "시간 초과! 다음엔 더 빠르게! 💨", "아쉽게 시간이 지났어요! ⌛",
+        "조금만 더 빨랐으면! 🏃", "시간 초과! 서두르세요! ⚡",
+        "타임아웃! 다음엔 파이팅! 🔔", "시간이 부족했네요! ⏰",
+        "시간과의 싸움에서 졌어요! 🥊", "0.1초만 더 있었으면! 💦",
+        "시간아 잠깐만! ⏰", "째깍째깍... 시간 종료! 🕐",
+        "빨리빨리! 다음엔 속도를! 🏎️", "타이머가 너무 빨라요! 😵‍💫",
+        "아쉽다! 시간만 좀 더 있었으면! 🙃", "시간 초과! 그래도 화이팅! 💪",
+        "촉박했네요! 다음엔 자신있게! 🏹", "시간이 적이었네요! 😤",
     ];
+
+    // ─── 기록 경신 추적 ───
+    let recordBroken = false; // 이번 게임에서 기록 경신했는지
+
+    function getRecordHint() {
+        if (previousScore === null) return null; // 첫 도전
+        if (recordBroken) return null; // 이미 경신함
+        if (score > previousScore) return null; // 이미 넘었음
+
+        const remaining = shuffledQuiz.length - currentQuestionIndex;
+        const gap = previousScore - score;
+        const nextLevel = shuffledQuiz[currentQuestionIndex] ? shuffledQuiz[currentQuestionIndex].level : '하';
+        const minPoints = nextLevel === '상' ? 300 : nextLevel === '중' ? 200 : 100;
+
+        // 이번 문제만 맞추면 기록 경신
+        if (gap > 0 && gap <= minPoints) {
+            return { type: 'one_more', gap: gap };
+        }
+        // 남은 문제 전부 맞추면 기록 경신 가능 (남은 3문제 이하)
+        if (remaining <= 3 && remaining > 0 && gap > 0 && gap <= remaining * 300) {
+            return { type: 'close', gap: gap, remaining: remaining };
+        }
+        // 현재 기록과 동점
+        if (gap === 0) {
+            return { type: 'tied' };
+        }
+        return null;
+    }
+
+    function showRecordHint() {
+        const hintEl = document.getElementById('record-hint');
+        if (!hintEl) return;
+
+        const hint = getRecordHint();
+        if (!hint) {
+            // 이미 기록 넘었으면 경신 중 표시
+            if (previousScore !== null && score > previousScore && !recordBroken) {
+                recordBroken = true;
+                hintEl.innerHTML = '🏆 <b>기록 경신 중!</b> 계속 달려요!';
+                hintEl.className = 'record-hint record-breaking';
+                return;
+            }
+            if (recordBroken) {
+                const diff = score - previousScore;
+                hintEl.innerHTML = `🏆 <b>기록 경신 중!</b> +${diff}점 앞서는 중!`;
+                hintEl.className = 'record-hint record-breaking';
+                return;
+            }
+            hintEl.className = 'record-hint hidden';
+            return;
+        }
+
+        hintEl.className = 'record-hint';
+        switch (hint.type) {
+            case 'one_more':
+                const msgs = [
+                    `🔥 이것만 맞추면 <b>기록 경신!</b> (${hint.gap}점 차이)`,
+                    `⚡ 기록까지 단 <b>${hint.gap}점!</b> 이번 문제가 승부처!`,
+                    `🎯 이 문제만 맞추면 <b>새 역사!</b> 집중!`,
+                    `💥 기록 경신 눈앞! <b>${hint.gap}점</b>만 더!`,
+                    `🏆 지금이 찬스! 맞추면 <b>최고 기록 갱신!</b>`,
+                ];
+                hintEl.innerHTML = msgs[Math.floor(Math.random() * msgs.length)];
+                hintEl.className = 'record-hint record-close';
+                break;
+            case 'close':
+                const closeMsgs = [
+                    `📊 기록까지 <b>${hint.gap}점</b> 남음! (남은 ${hint.remaining}문제)`,
+                    `🎯 아직 기회 있어요! <b>${hint.gap}점</b>만 더 따면 기록 경신!`,
+                    `💪 포기하지 마세요! 기록까지 <b>${hint.gap}점!</b>`,
+                ];
+                hintEl.innerHTML = closeMsgs[Math.floor(Math.random() * closeMsgs.length)];
+                break;
+            case 'tied':
+                hintEl.innerHTML = '⚡ 현재 <b>최고 기록과 동점!</b> 한 문제만 더 맞추면 경신!';
+                hintEl.className = 'record-hint record-close';
+                break;
+        }
+    }
 
     function getRandomMessage(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
     function getCorrectFeedback(points, streakMsg, ref) {
+        // 기록 경신 순간 특별 메시지
+        if (previousScore !== null && !recordBroken && score > previousScore && score - points <= previousScore) {
+            recordBroken = true;
+            const recordMsgs = [
+                "🏆 기록 경신!! 새로운 역사를 썼어요!",
+                "🏆 최고 기록 갱신!! 대단합니다!",
+                "🏆 드디어 기록 돌파!! 축하해요!",
+                "🏆 새 기록 달성!! 멈추지 마세요!",
+                "🏆 자기 자신을 넘었어요!! 최고!",
+                "🏆 기록 경신! 오늘의 전설!!",
+            ];
+            const msg = getRandomMessage(recordMsgs);
+            return `<div class="feedback-correct feedback-record">${msg} +${points}점${streakMsg} (${ref})<div style="font-size:0.85em; margin-top:2px;">이전 기록 ${previousScore}점 → 현재 ${score}점 (+${score - previousScore}점)</div></div>`;
+        }
+
         const msg = getRandomMessage(correctMessages);
-        // 30% 확률로 성경 구절도 함께 표시
-        const verse = Math.random() < 0.3 ? `<div style="font-size:0.8em; margin-top:4px; color:#388E3C; font-style:italic;">${getRandomMessage(correctBibleVerses)}</div>` : '';
+        // 25% 확률로 성경 구절도 함께 표시
+        const verse = Math.random() < 0.25 ? `<div style="font-size:0.8em; margin-top:4px; color:#388E3C; font-style:italic;">${getRandomMessage(correctBibleVerses)}</div>` : '';
         return `<div class="feedback-correct">${msg} +${points}점${streakMsg} (${ref})${verse}</div>`;
     }
 
     function getWrongFeedback(correctText, ref) {
         const msg = getRandomMessage(wrongMessages);
-        // 30% 확률로 위로 성경 구절 표시
-        const verse = Math.random() < 0.3 ? `<div style="font-size:0.8em; margin-top:4px; color:#C62828; font-style:italic;">${getRandomMessage(wrongBibleVerses)}</div>` : '';
+        // 25% 확률로 위로 성경 구절 표시
+        const verse = Math.random() < 0.25 ? `<div style="font-size:0.8em; margin-top:4px; color:#C62828; font-style:italic;">${getRandomMessage(wrongBibleVerses)}</div>` : '';
         return `<div class="feedback-wrong">${msg} 정답: ${correctText} (${ref})${verse}</div>`;
     }
 
@@ -1439,11 +1586,31 @@
         quizScreen.classList.remove('hidden');
         quizScreen.classList.add('card-enter');
         setTimeout(() => quizScreen.classList.remove('card-enter'), 400);
-        shuffledQuiz = shuffleArray(quizData);
+        // 이전에 맞춘 문제 불러오기 & 필터링
+        const storageKey = `answered_${playerGroup}_${playerName}`;
+        let savedAnswered = [];
+        try { savedAnswered = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e) {}
+        answeredCorrectly = new Set(savedAnswered);
+
+        const unanswered = quizData.filter(q => !answeredCorrectly.has(q.question));
+        if (unanswered.length === 0) {
+            // 모든 문제를 맞춘 경우 → 전체 리셋
+            answeredCorrectly = new Set();
+            localStorage.removeItem(storageKey);
+            shuffledQuiz = shuffleArray(quizData);
+            showRivalToast('🎊 모든 문제를 맞춘 적 있어요! 전체 문제로 재도전!');
+        } else {
+            shuffledQuiz = shuffleArray(unanswered);
+            if (savedAnswered.length > 0) {
+                showRivalToast(`📋 이전에 맞춘 ${savedAnswered.length}문제 제외! 남은 ${unanswered.length}문제 도전!`);
+            }
+        }
+
         currentQuestionIndex = 0;
         score = 0;
         lives = 3;
         streak = 0;
+        recordBroken = false;
         updateHUD();
         loadQuestion();
         pushScreen('quiz');
@@ -1459,6 +1626,9 @@
         // 진행률 업데이트
         const progressPercent = ((currentQuestionIndex) / shuffledQuiz.length) * 100;
         progressBar.style.width = `${progressPercent}%`;
+
+        // 기록 경신 힌트 표시
+        showRecordHint();
 
         // 문제 세팅 (애니메이션 적용)
         badgeEl.textContent = `${currentData.category} | 난이도: ${currentData.level}`;
@@ -1504,6 +1674,13 @@
         score += points;
         showScoreFloat(points);
         updateHUD();
+
+        // 맞춘 문제 기록 (다음에 안 나오게)
+        answeredCorrectly.add(currentData.question);
+        try {
+            const storageKey = `answered_${playerGroup}_${playerName}`;
+            localStorage.setItem(storageKey, JSON.stringify([...answeredCorrectly]));
+        } catch(e) {}
 
         // 카드 테두리 초록 펄스
         quizScreen.classList.remove('bg-pulse-green');

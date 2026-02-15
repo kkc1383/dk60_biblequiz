@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#FFC107">
-    <title>동광교회 60주년 성경퀴즈대회</title>
+    <title>동광교회 60주년 온라인 성경퀴즈대회</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -202,14 +202,14 @@
         /* 애니메이션 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-10px); }
-            40% { transform: translateX(10px); }
-            60% { transform: translateX(-6px); }
-            80% { transform: translateX(6px); }
+            20% { transform: translateX(-12px); }
+            40% { transform: translateX(12px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
         }
         @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            70% { transform: scale(1.2); }
+            0% { transform: scale(0.3); opacity: 0; }
+            60% { transform: scale(1.15); }
             100% { transform: scale(1); opacity: 1; }
         }
         @keyframes heartBreak {
@@ -218,23 +218,168 @@
             100% { transform: scale(0); opacity: 0; }
         }
         @keyframes scoreUp {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-40px); opacity: 0; }
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            50% { transform: translateY(-25px) scale(1.3); opacity: 1; }
+            100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
+        }
+        @keyframes slideUp {
+            0% { transform: translateY(30px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideInLeft {
+            0% { transform: translateX(-40px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes correctFlash {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.6); }
+            50% { box-shadow: 0 0 30px 10px rgba(76, 175, 80, 0.3); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+        @keyframes wrongFlash {
+            0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.6); }
+            50% { box-shadow: 0 0 30px 10px rgba(244, 67, 54, 0.3); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+        @keyframes streakFire {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes countdownPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.4); color: #F44336; }
+        }
+        @keyframes celebrateBounce {
+            0% { transform: translateY(0); }
+            30% { transform: translateY(-20px); }
+            50% { transform: translateY(0); }
+            70% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes bgPulseGreen {
+            0% { border-color: transparent; }
+            50% { border-color: #4CAF50; }
+            100% { border-color: transparent; }
+        }
+        @keyframes bgPulseRed {
+            0% { border-color: transparent; }
+            50% { border-color: #F44336; }
+            100% { border-color: transparent; }
+        }
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+        }
+        @keyframes fadeInScale {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 193, 7, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(255, 193, 7, 0.6); }
         }
         .shake { animation: shake 0.5s ease; }
-        .pop-in { animation: popIn 0.4s ease; }
+        .pop-in { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .slide-up { animation: slideUp 0.4s ease-out; }
+        .slide-in-left { animation: slideInLeft 0.3s ease-out; }
+        .correct-flash { animation: correctFlash 0.6s ease; }
+        .wrong-flash { animation: wrongFlash 0.6s ease; }
+        .streak-fire { animation: streakFire 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .countdown-pulse { animation: countdownPulse 0.5s ease; }
+        .celebrate-bounce { animation: celebrateBounce 0.8s ease; }
+        .bg-pulse-green { animation: bgPulseGreen 0.6s ease; }
+        .bg-pulse-red { animation: bgPulseRed 0.6s ease; }
+        .bounce-in { animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .fade-in-scale { animation: fadeInScale 0.4s ease-out; }
+
         .score-float {
             position: absolute;
             right: 20px;
             top: 50px;
-            font-size: 1.2rem;
-            font-weight: 800;
+            font-size: 1.4rem;
+            font-weight: 900;
             color: #4CAF50;
             pointer-events: none;
-            animation: scoreUp 1s ease forwards;
+            animation: scoreUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            text-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        .score-float.big {
+            font-size: 2rem;
+            color: var(--accent-red);
+            text-shadow: 0 2px 12px rgba(229, 57, 53, 0.4);
         }
         .quiz-card-wrapper {
             position: relative;
+        }
+
+        /* 스트릭 오버레이 */
+        .streak-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent-red);
+            text-shadow: 0 4px 20px rgba(229, 57, 53, 0.5);
+            pointer-events: none;
+            z-index: 1000;
+            animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                       fadeOut 0.4s ease 1.2s forwards;
+            white-space: nowrap;
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+        }
+
+        /* 버튼 프레스 애니메이션 */
+        .btn:active {
+            transform: scale(0.95) !important;
+            transition: transform 0.1s;
+        }
+        .btn-option {
+            transition: all 0.2s ease, transform 0.1s;
+        }
+        .btn-option.option-enter {
+            animation: slideInLeft 0.3s ease-out both;
+        }
+
+        /* 피드백 텍스트 애니메이션 */
+        .feedback-correct {
+            animation: slideUp 0.3s ease-out;
+        }
+        .feedback-wrong {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        /* 문제 텍스트 전환 */
+        .question-text.animate {
+            animation: slideUp 0.4s ease-out;
+        }
+
+        /* 카드 전환 */
+        .card.card-enter {
+            animation: fadeInScale 0.4s ease-out;
+        }
+
+        /* 파티클 이펙트 */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            font-size: 1.5rem;
+            animation: confetti 1s ease-out forwards;
+        }
+
+        /* HUD 글로우 */
+        .hud-score.glow {
+            animation: glowPulse 0.6s ease;
         }
 
         /* 게임오버 화면 */
@@ -321,6 +466,43 @@
             color: #999;
             padding: 30px 0;
             font-size: 0.95rem;
+        }
+        .tab-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--primary-dark);
+            color: var(--primary-yellow);
+            border-color: var(--primary-dark);
+        }
+        .tab-btn:hover:not(.active) {
+            border-color: var(--primary-yellow);
+            background: #FFFDE7;
+        }
+        .btn-share {
+            background: #25D366;
+            color: #fff;
+            border: none;
+            font-weight: 900;
+        }
+        .btn-share:hover {
+            background: #1DA851;
+            transform: translateY(-2px);
         }
         #leaderboard-content {
             overflow-x: auto;
@@ -492,6 +674,10 @@
             .btn-group {
                 flex-direction: column;
             }
+            .tab-btn {
+                font-size: 0.85rem;
+                padding: 8px 6px;
+            }
         }
 
     </style>
@@ -501,15 +687,15 @@
 <div class="container">
     <header>
         <img src="logo.png" alt="동광교회 60주년 로고" class="logo-img">
-        <h1 class="title">전교인 성경퀴즈대회</h1>
+        <h1 class="title">전교인 온라인 성경퀴즈대회</h1>
         <p class="subtitle">동광교회 창립 60주년 기념</p>
     </header>
 
     <!-- 1. 시작 화면 -->
     <div id="start-screen" class="card">
-        <img src="poster.jpg" alt="성경퀴즈대회 포스터" class="poster-img">
+        <img src="poster.jpg" alt="온라인 성경퀴즈대회 포스터" class="poster-img">
         <div class="start-badge">창립 60주년</div>
-        <h2 class="start-title">성경퀴즈대회</h2>
+        <h2 class="start-title">온라인 성경퀴즈대회</h2>
         <div class="slogan">오직 마음 다해<br>카리스마 있게<br>세상을 정복하라!</div>
         <div class="scope-tags">
             <span class="scope-tag">학개</span>
@@ -532,9 +718,43 @@
         <h2><img src="churchlogo.png" alt="교회 로고" class="church-logo">참가자 등록</h2>
         <p style="margin: 15px 0 20px; color: #666;">소속과 이름을 입력해주세요.</p>
         <div class="form-group">
-            <label for="input-group">소속 (부서/구역)</label>
-            <input type="text" id="input-group" class="form-input" placeholder="예: 청년부, 1구역">
-            <div class="form-error" id="error-group">소속을 입력해주세요.</div>
+            <label for="input-group">소속 (부서)</label>
+            <select id="input-group" class="form-input">
+                <option value="">-- 소속을 선택하세요 --</option>
+                <optgroup label="교육부서">
+                    <option value="유아부(4.5세)">유아부(4.5세)</option>
+                    <option value="유치부(6.7세)">유치부(6.7세)</option>
+                    <option value="유년부(1.2학년)">유년부(1.2학년)</option>
+                    <option value="초등부(3.4학년)">초등부(3.4학년)</option>
+                    <option value="소년부(5.6학년)">소년부(5.6학년)</option>
+                    <option value="중등부">중등부</option>
+                    <option value="고등부">고등부</option>
+                    <option value="청년부">청년부</option>
+                </optgroup>
+                <optgroup label="남전도회">
+                    <option value="1남전도회">1남전도회</option>
+                    <option value="2남전도회">2남전도회</option>
+                    <option value="3남전도회">3남전도회</option>
+                    <option value="4남전도회">4남전도회</option>
+                    <option value="5남전도회">5남전도회</option>
+                    <option value="6남전도회">6남전도회</option>
+                    <option value="7남전도회">7남전도회</option>
+                    <option value="8남전도회">8남전도회</option>
+                </optgroup>
+                <optgroup label="여전도회">
+                    <option value="1여전도회">1여전도회</option>
+                    <option value="2여전도회">2여전도회</option>
+                    <option value="3여전도회">3여전도회</option>
+                    <option value="4여전도회">4여전도회</option>
+                    <option value="5여전도회">5여전도회</option>
+                    <option value="6여전도회">6여전도회</option>
+                    <option value="7여전도회">7여전도회</option>
+                    <option value="8여전도회">8여전도회</option>
+                    <option value="9여전도회">9여전도회</option>
+                    <option value="10여전도회">10여전도회</option>
+                </optgroup>
+            </select>
+            <div class="form-error" id="error-group">소속을 선택해주세요.</div>
         </div>
         <div class="form-group">
             <label for="input-name">이름</label>
@@ -576,6 +796,7 @@
         <div class="gameover-score" id="gameover-score">0점</div>
         <p style="color:#666; margin: 10px 0;">목숨을 모두 잃었습니다!</p>
         <p id="gameover-message"></p>
+        <button class="btn btn-share" onclick="shareResult('gameover')">결과 공유하기</button>
         <div class="btn-group">
             <button class="btn btn-primary" onclick="restartQuiz()">다시 도전하기</button>
             <button class="btn btn-secondary" onclick="showLeaderboard()">리더보드</button>
@@ -588,6 +809,7 @@
         <p id="result-player-info"></p>
         <div class="score-display" id="final-score">0점</div>
         <p id="result-message">말씀 안에 거하는 삶, 축복합니다!</p>
+        <button class="btn btn-share" onclick="shareResult('result')">결과 공유하기</button>
         <div class="btn-group">
             <button class="btn btn-primary" onclick="restartQuiz()">다시 도전하기</button>
             <button class="btn btn-secondary" onclick="showLeaderboard()">리더보드</button>
@@ -597,8 +819,13 @@
     <!-- 5. 리더보드 화면 -->
     <div id="leaderboard-screen" class="card hidden">
         <h2>리더보드</h2>
-        <p style="margin: 10px 0; color: #666;">상위 기록을 확인하세요!</p>
+        <p style="margin: 10px 0 15px; color: #666;">상위 기록을 확인하세요!</p>
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('individual')">개인 순위</button>
+            <button class="tab-btn" onclick="switchTab('department')">부서 대항전</button>
+        </div>
         <div id="leaderboard-content"></div>
+        <div id="department-content" class="hidden"></div>
         <button class="btn btn-primary" style="margin-top: 20px;" onclick="showStart()">처음으로</button>
     </div>
 </div>
@@ -781,10 +1008,36 @@
 
     function showScoreFloat(points) {
         const floater = document.createElement('div');
-        floater.className = 'score-float';
+        floater.className = points >= 250 ? 'score-float big' : 'score-float';
         floater.textContent = `+${points}`;
         quizScreen.appendChild(floater);
-        setTimeout(() => floater.remove(), 1000);
+        setTimeout(() => floater.remove(), 1200);
+    }
+
+    function showStreakOverlay(streakCount) {
+        const overlay = document.createElement('div');
+        overlay.className = 'streak-overlay';
+        if (streakCount >= 10) overlay.textContent = `🔥 ${streakCount}연속!! 전설!! 🔥`;
+        else if (streakCount >= 7) overlay.textContent = `🔥 ${streakCount}연속! 미쳤다! 🔥`;
+        else if (streakCount >= 5) overlay.textContent = `🔥 ${streakCount}연속! 대단해요!`;
+        else overlay.textContent = `🔥 ${streakCount}연속!`;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 1600);
+    }
+
+    function spawnParticles() {
+        const emojis = ['🎉', '✨', '⭐', '🌟', '💛', '🎊'];
+        for (let i = 0; i < 8; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            p.style.left = (Math.random() * 80 + 10) + '%';
+            p.style.top = (Math.random() * 40 + 30) + '%';
+            p.style.animationDelay = (Math.random() * 0.3) + 's';
+            p.style.animationDuration = (0.8 + Math.random() * 0.5) + 's';
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 1500);
+        }
     }
 
     function loseLife() {
@@ -830,6 +1083,11 @@
             const color = pct > 0.5 ? 'green' : pct > 0.25 ? 'yellow' : 'red';
             timerText.className = 'timer-text ' + color;
             timerFill.className = 'timer-fill ' + color;
+            // 마지막 3초 카운트다운 펄스
+            if (timeLeft <= 3 && timeLeft > 0) {
+                timerText.classList.add('countdown-pulse');
+                setTimeout(() => timerText.classList.remove('countdown-pulse'), 500);
+            }
             if (timeLeft <= 0) {
                 clearInterval(timer);
                 timeUp();
@@ -853,8 +1111,10 @@
         const currentData = shuffledQuiz[currentQuestionIndex];
         streak = 0;
         loseLife();
-        quizScreen.classList.add('shake');
-        setTimeout(() => quizScreen.classList.remove('shake'), 500);
+        quizScreen.classList.remove('shake', 'bg-pulse-red');
+        void quizScreen.offsetWidth;
+        quizScreen.classList.add('shake', 'bg-pulse-red');
+        setTimeout(() => quizScreen.classList.remove('shake', 'bg-pulse-red'), 600);
 
         if (currentData.type === 'objective') {
             const buttons = optionsContainer.getElementsByTagName('button');
@@ -874,17 +1134,32 @@
     function showRegister() {
         hideAllScreens();
         registerScreen.classList.remove('hidden');
-        document.getElementById('input-group').focus();
+        registerScreen.classList.add('card-enter');
+        setTimeout(() => registerScreen.classList.remove('card-enter'), 400);
+        document.getElementById('input-name').focus();
     }
 
     function showStart() {
         hideAllScreens();
         startScreen.classList.remove('hidden');
+        startScreen.classList.add('card-enter');
+        setTimeout(() => startScreen.classList.remove('card-enter'), 400);
     }
 
     function showLeaderboard() {
         hideAllScreens();
         leaderboardScreen.classList.remove('hidden');
+        leaderboardScreen.classList.add('card-enter');
+        setTimeout(() => leaderboardScreen.classList.remove('card-enter'), 400);
+        // 탭 초기화
+        currentTab = 'individual';
+        const tabs = document.querySelectorAll('.tab-btn');
+        if (tabs.length >= 2) {
+            tabs[0].classList.add('active');
+            tabs[1].classList.remove('active');
+        }
+        document.getElementById('leaderboard-content').classList.remove('hidden');
+        document.getElementById('department-content').classList.add('hidden');
         renderLeaderboard();
     }
 
@@ -899,7 +1174,7 @@
         errorGroup.style.display = 'none';
         errorName.style.display = 'none';
 
-        if (!groupInput.value.trim()) {
+        if (!groupInput.value) {
             errorGroup.style.display = 'block';
             valid = false;
         }
@@ -909,11 +1184,13 @@
         }
         if (!valid) return;
 
-        playerGroup = groupInput.value.trim();
+        playerGroup = groupInput.value;
         playerName = nameInput.value.trim();
 
         hideAllScreens();
         quizScreen.classList.remove('hidden');
+        quizScreen.classList.add('card-enter');
+        setTimeout(() => quizScreen.classList.remove('card-enter'), 400);
         shuffledQuiz = shuffleArray(quizData);
         currentQuestionIndex = 0;
         score = 0;
@@ -927,16 +1204,19 @@
         isAnswering = true;
         feedbackEl.innerHTML = "";
         document.getElementById('subjective-answer').value = "";
-        
+
         const currentData = shuffledQuiz[currentQuestionIndex];
-        
+
         // 진행률 업데이트
         const progressPercent = ((currentQuestionIndex) / shuffledQuiz.length) * 100;
         progressBar.style.width = `${progressPercent}%`;
 
-        // 문제 세팅
+        // 문제 세팅 (애니메이션 적용)
         badgeEl.textContent = `${currentData.category} | 난이도: ${currentData.level}`;
         questionEl.textContent = `Q${currentQuestionIndex + 1}. ${currentData.question}`;
+        questionEl.classList.remove('animate');
+        void questionEl.offsetWidth; // reflow trigger
+        questionEl.classList.add('animate');
         startTimer(currentData.type);
 
         // 타입별 UI 분기
@@ -953,7 +1233,8 @@
 
             currentShuffledOptions.forEach((option, index) => {
                 const btn = document.createElement('button');
-                btn.className = 'btn btn-option';
+                btn.className = 'btn btn-option option-enter';
+                btn.style.animationDelay = `${index * 0.08}s`;
                 btn.textContent = `${index + 1}. ${option}`;
                 btn.onclick = () => checkAnswer(index);
                 optionsContainer.appendChild(btn);
@@ -961,6 +1242,9 @@
         } else {
             optionsContainer.classList.add('hidden');
             inputContainer.classList.remove('hidden');
+            inputContainer.classList.remove('slide-up');
+            void inputContainer.offsetWidth;
+            inputContainer.classList.add('slide-up');
         }
     }
 
@@ -971,6 +1255,34 @@
         score += points;
         showScoreFloat(points);
         updateHUD();
+
+        // 카드 테두리 초록 펄스
+        quizScreen.classList.remove('bg-pulse-green');
+        void quizScreen.offsetWidth;
+        quizScreen.classList.add('bg-pulse-green');
+        setTimeout(() => quizScreen.classList.remove('bg-pulse-green'), 600);
+
+        // HUD 점수 글로우
+        const hudScore = document.getElementById('hud-score');
+        hudScore.classList.remove('glow');
+        void hudScore.offsetWidth;
+        hudScore.classList.add('glow');
+        setTimeout(() => hudScore.classList.remove('glow'), 600);
+
+        // 스트릭 마일스톤 (3, 5, 7, 10 연속)
+        if ([3, 5, 7, 10].includes(streak)) {
+            showStreakOverlay(streak);
+            spawnParticles();
+        }
+
+        // 스트릭 HUD 애니메이션
+        if (streak >= 2) {
+            const streakEl = document.getElementById('hud-streak');
+            streakEl.classList.remove('streak-fire');
+            void streakEl.offsetWidth;
+            streakEl.classList.add('streak-fire');
+        }
+
         const streakMsg = streak >= 2 ? ` (${streak}연속! 🔥)` : '';
         feedbackEl.innerHTML = `<div class="feedback-correct">정답! +${points}점${streakMsg} (${currentData.ref})</div>`;
     }
@@ -979,8 +1291,13 @@
         stopTimer();
         streak = 0;
         loseLife();
-        quizScreen.classList.add('shake');
-        setTimeout(() => quizScreen.classList.remove('shake'), 500);
+
+        // 카드 흔들림 + 빨간 테두리 펄스
+        quizScreen.classList.remove('shake', 'bg-pulse-red');
+        void quizScreen.offsetWidth;
+        quizScreen.classList.add('shake', 'bg-pulse-red');
+        setTimeout(() => quizScreen.classList.remove('shake', 'bg-pulse-red'), 600);
+
         feedbackEl.innerHTML = `<div class="feedback-wrong">오답! 정답: ${correctText} (${currentData.ref})</div>`;
     }
 
@@ -1051,10 +1368,15 @@
     function showGameOver() {
         hideAllScreens();
         gameoverScreen.classList.remove('hidden');
+        gameoverScreen.classList.add('card-enter');
+        setTimeout(() => gameoverScreen.classList.remove('card-enter'), 400);
 
         document.getElementById('gameover-player-info').textContent =
             `${playerGroup} · ${playerName}`;
-        document.getElementById('gameover-score').textContent = `${score}점`;
+
+        // 점수 카운트업 애니메이션
+        const scoreEl = document.getElementById('gameover-score');
+        animateScoreCount(scoreEl, score);
 
         const msgEl = document.getElementById('gameover-message');
         if (score > 0) msgEl.textContent = "아깝네요! 다시 도전해보세요! 💪";
@@ -1066,12 +1388,19 @@
     function showResult() {
         hideAllScreens();
         resultScreen.classList.remove('hidden');
+        resultScreen.classList.add('card-enter');
+        setTimeout(() => resultScreen.classList.remove('card-enter'), 400);
 
         document.getElementById('result-player-info').textContent =
             `${playerGroup} · ${playerName}님, 수고하셨습니다!`;
 
+        // 점수 카운트업 애니메이션
         const finalScoreEl = document.getElementById('final-score');
-        finalScoreEl.textContent = `${score}점`;
+        animateScoreCount(finalScoreEl, score);
+
+        // 완주 축하 파티클
+        setTimeout(() => spawnParticles(), 500);
+        setTimeout(() => spawnParticles(), 1000);
 
         const msgEl = document.getElementById('result-message');
         if (lives === 3) msgEl.textContent = "완벽합니다! 목숨을 하나도 안 잃었어요! 🎉";
@@ -1081,9 +1410,84 @@
         saveScore(playerGroup, playerName, score);
     }
 
+    // 점수 카운트업 애니메이션
+    function animateScoreCount(el, targetScore) {
+        let current = 0;
+        const duration = 1200;
+        const step = Math.max(1, Math.floor(targetScore / (duration / 16)));
+        const startTime = performance.now();
+        function tick(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            current = Math.round(eased * targetScore);
+            el.textContent = `${current}점`;
+            if (progress < 1) {
+                requestAnimationFrame(tick);
+            } else {
+                el.textContent = `${targetScore}점`;
+                el.classList.add('celebrate-bounce');
+                setTimeout(() => el.classList.remove('celebrate-bounce'), 800);
+            }
+        }
+        if (targetScore > 0) {
+            requestAnimationFrame(tick);
+        } else {
+            el.textContent = `${targetScore}점`;
+        }
+    }
+
     function restartQuiz() {
         hideAllScreens();
         registerScreen.classList.remove('hidden');
+    }
+
+    function shareResult(type) {
+        const answered = currentQuestionIndex + (type === 'result' ? 0 : 1);
+        const total = shuffledQuiz.length;
+
+        // 부서원 자극 멘트
+        const taunts = [
+            `${playerGroup}의 자존심을 걸고 ${score}점 달성! 이 점수 넘을 부서원 어디 없나요?`,
+            `${playerGroup}에서 ${score}점이면 좀 치는 건가요? 우리 부서 실력 보여주자!`,
+            `${playerGroup} 부서원들! 나 ${score}점 나왔다~ 이거 이길 자신 있어?`,
+            `${playerGroup} 대표로 ${score}점 찍었습니다! 부서 총점 올리러 당장 도전하세요!`
+        ];
+        const taunt = taunts[Math.floor(Math.random() * taunts.length)];
+
+        let shareText = '';
+        if (type === 'gameover') {
+            shareText = `⛪ 동광교회 60주년 온라인 성경퀴즈대회\n\n`
+                + `${taunt}\n\n`
+                + `📖 ${playerName} (${playerGroup})\n`
+                + `💯 ${score}점\n`
+                + `❤️ 목숨 소진으로 게임오버!\n\n`
+                + `👉 너도 도전해봐! 부서 순위를 올려보자!\n`
+                + `${location.href}`;
+        } else {
+            const livesEmoji = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+            shareText = `⛪ 동광교회 60주년 온라인 성경퀴즈대회\n\n`
+                + `${taunt}\n\n`
+                + `📖 ${playerName} (${playerGroup})\n`
+                + `💯 ${score}점 | ${livesEmoji}\n`
+                + `✅ 전 ${total}문제 완주!\n\n`
+                + `👉 너도 도전해봐! 부서 순위를 올려보자!\n`
+                + `${location.href}`;
+        }
+
+        if (navigator.share) {
+            navigator.share({
+                title: '동광교회 온라인 성경퀴즈대회 결과',
+                text: shareText
+            }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(shareText).then(() => {
+                alert('결과가 클립보드에 복사되었습니다!\n카카오톡이나 SNS에 붙여넣기 해주세요.');
+            }).catch(() => {
+                prompt('아래 텍스트를 복사하여 공유하세요:', shareText);
+            });
+        }
     }
 
     // ─── 리더보드 (Firestore) ───
@@ -1102,6 +1506,85 @@
         }).catch(function(error) {
             console.error('점수 저장 실패:', error);
         });
+    }
+
+    let currentTab = 'individual';
+
+    function switchTab(tab) {
+        currentTab = tab;
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs[0].classList.toggle('active', tab === 'individual');
+        tabs[1].classList.toggle('active', tab === 'department');
+
+        const individualContent = document.getElementById('leaderboard-content');
+        const departmentContent = document.getElementById('department-content');
+
+        if (tab === 'individual') {
+            individualContent.classList.remove('hidden');
+            departmentContent.classList.add('hidden');
+        } else {
+            individualContent.classList.add('hidden');
+            departmentContent.classList.remove('hidden');
+            renderDepartmentRanking();
+        }
+    }
+
+    async function renderDepartmentRanking() {
+        const container = document.getElementById('department-content');
+        container.innerHTML = '<div class="leaderboard-empty">불러오는 중...</div>';
+
+        try {
+            const snapshot = await db.collection('scores').get();
+
+            if (snapshot.empty) {
+                container.innerHTML = '<div class="leaderboard-empty">아직 기록이 없습니다.<br>첫 번째 도전자가 되어보세요!</div>';
+                return;
+            }
+
+            // 부서별 집계
+            const deptMap = {};
+            snapshot.docs.forEach(doc => {
+                const entry = doc.data();
+                const group = entry.group || '미분류';
+                if (!deptMap[group]) {
+                    deptMap[group] = { totalScore: 0, count: 0, maxScore: 0 };
+                }
+                deptMap[group].totalScore += entry.score;
+                deptMap[group].count += 1;
+                if (entry.score > deptMap[group].maxScore) {
+                    deptMap[group].maxScore = entry.score;
+                }
+            });
+
+            // 총점 기준 내림차순 정렬
+            const sorted = Object.entries(deptMap)
+                .map(([name, data]) => ({ name, ...data }))
+                .sort((a, b) => b.totalScore - a.totalScore);
+
+            const medals = ['🥇', '🥈', '🥉'];
+            let html = `<table class="leaderboard-table">
+                <thead><tr>
+                    <th>순위</th><th>부서</th><th>총점</th><th>인원</th><th>최고점</th>
+                </tr></thead><tbody>`;
+
+            sorted.forEach((dept, i) => {
+                const rankClass = i < 3 ? ` class="rank-${i + 1}"` : '';
+                const rankText = i < 3 ? `<span class="medal">${medals[i]}</span>` : (i + 1);
+                html += `<tr${rankClass}>
+                    <td>${rankText}</td>
+                    <td>${esc(dept.name)}</td>
+                    <td><strong>${dept.totalScore}점</strong></td>
+                    <td>${dept.count}명</td>
+                    <td>${dept.maxScore}점</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('부서 대항전 조회 실패:', error);
+            container.innerHTML = '<div class="leaderboard-empty">데이터를 불러오지 못했습니다.</div>';
+        }
     }
 
     async function renderLeaderboard() {

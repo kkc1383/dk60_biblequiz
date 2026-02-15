@@ -1117,6 +1117,113 @@
     // 초기 상태 저장
     history.replaceState({ screen: 'start' }, '');
 
+    // ─── 피드백 메시지 바리에이션 ───
+    const correctMessages = [
+        "정답! 👏",
+        "맞았습니다! ✨",
+        "정확해요! 👍",
+        "훌륭합니다! 🌟",
+        "대단해요! 💯",
+        "완벽해요! ⭐",
+        "바로 그거예요! 🎯",
+        "역시 실력자! 💪",
+        "성경 박사시네요! 📖",
+        "놀라운 지식이에요! 🧠",
+        "하나님의 말씀을 잘 아시네요! ✝️",
+        "은혜로운 정답! 🙏",
+        "멋져요! 🎉",
+        "빙고! 정답! 🔔",
+        "척척 맞추시네요! 😎",
+        "감탄이 나옵니다! 👏",
+        "말씀 묵상의 열매네요! 🌿",
+        "정답! 지혜가 넘치시네요! 📜",
+        "우와, 대단합니다! 🤩",
+        "맞았어요! 계속 이 기세로! 🚀",
+    ];
+
+    const correctBibleVerses = [
+        "\"지혜의 근본은 여호와를 경외하는 것이라\" (잠 9:10)",
+        "\"네 마음을 다하여 여호와를 신뢰하라\" (잠 3:5)",
+        "\"항상 기뻐하라\" (살전 5:16)",
+        "\"쉬지 말고 기도하라\" (살전 5:17)",
+        "\"범사에 감사하라\" (살전 5:18)",
+        "\"여호와는 나의 목자시니 내게 부족함이 없으리로다\" (시 23:1)",
+        "\"내가 너희에게 평안을 끼치노라\" (요 14:27)",
+        "\"두려워하지 말라 내가 너와 함께 함이라\" (사 41:10)",
+        "\"나의 은혜가 네게 족하도다\" (고후 12:9)",
+        "\"모든 지각에 뛰어난 하나님의 평강이 너희를 지키시리라\" (빌 4:7)",
+    ];
+
+    const wrongMessages = [
+        "아쉽네요! 😅",
+        "아깝다! 다음엔 맞춰봐요! 💪",
+        "아차! 😮",
+        "괜찮아요, 다음 기회가 있어요! 🙂",
+        "틀렸지만 배움이 있어요! 📚",
+        "이런! 아쉬워요! 😥",
+        "다음엔 꼭 맞출 수 있어요! 💪",
+        "실수는 성장의 기회예요! 🌱",
+        "한 번 더 기억해봐요! 🧠",
+        "가까웠어요! 조금만 더! 👊",
+        "아쉽지만 포기하지 마세요! 🔥",
+        "이것도 하나의 배움이에요! ✏️",
+        "다음엔 분명 맞출 거예요! ⭐",
+        "오답도 실력의 일부! 📈",
+        "말씀을 더 묵상해봐요! 📖",
+        "이번 기회로 기억해두세요! 💡",
+        "괜찮아요! 끝까지 화이팅! 🏃",
+        "넘어져도 다시 일어나면 돼요! 🌈",
+        "아쉽네요~ 정답을 확인해봐요! 🔍",
+        "오답 노트에 적어두세요! 📝",
+    ];
+
+    const wrongBibleVerses = [
+        "\"넘어지더라도 아주 엎어지지 아니함은 여호와께서 붙드심이로다\" (시 37:24)",
+        "\"내가 약한 그 때에 강함이라\" (고후 12:10)",
+        "\"눈물을 흘리며 씨를 뿌리는 자는 기쁨으로 거두리로다\" (시 126:5)",
+        "\"인내를 온전히 이루라\" (약 1:4)",
+        "\"피곤한 자에게는 능력을 주시며\" (사 40:29)",
+        "\"여호와를 앙망하는 자는 새 힘을 얻으리니\" (사 40:31)",
+        "\"환난은 인내를, 인내는 연단을, 연단은 소망을 이루는 줄 앎이로다\" (롬 5:3-4)",
+        "\"선을 행하되 낙심하지 말지니\" (갈 6:9)",
+    ];
+
+    const timeUpMessages = [
+        "시간 초과! ⏰",
+        "시간이 다 됐어요! ⏳",
+        "시간 오버! 조금만 더 빨랐으면! 😅",
+        "앗, 시간이! ⏱️",
+        "시간 초과! 다음엔 더 빠르게! 💨",
+        "아쉽게 시간이 지났어요! ⌛",
+        "조금만 더 빨랐으면! 🏃",
+        "시간 초과! 서두르세요! ⚡",
+        "타임아웃! 다음엔 파이팅! 🔔",
+        "시간이 부족했네요! ⏰",
+    ];
+
+    function getRandomMessage(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getCorrectFeedback(points, streakMsg, ref) {
+        const msg = getRandomMessage(correctMessages);
+        // 30% 확률로 성경 구절도 함께 표시
+        const verse = Math.random() < 0.3 ? `<div style="font-size:0.8em; margin-top:4px; color:#388E3C; font-style:italic;">${getRandomMessage(correctBibleVerses)}</div>` : '';
+        return `<div class="feedback-correct">${msg} +${points}점${streakMsg} (${ref})${verse}</div>`;
+    }
+
+    function getWrongFeedback(correctText, ref) {
+        const msg = getRandomMessage(wrongMessages);
+        // 30% 확률로 위로 성경 구절 표시
+        const verse = Math.random() < 0.3 ? `<div style="font-size:0.8em; margin-top:4px; color:#C62828; font-style:italic;">${getRandomMessage(wrongBibleVerses)}</div>` : '';
+        return `<div class="feedback-wrong">${msg} 정답: ${correctText} (${ref})${verse}</div>`;
+    }
+
+    function getTimeUpFeedback(correctText, ref) {
+        const msg = getRandomMessage(timeUpMessages);
+        return `<div class="feedback-wrong">${msg} 정답: ${correctText} (${ref})</div>`;
+    }
+
     function updateHUD() {
         const heartsEl = document.getElementById('hud-lives');
         heartsEl.innerHTML = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
@@ -1238,9 +1345,9 @@
         if (currentData.type === 'objective') {
             const buttons = optionsContainer.getElementsByTagName('button');
             buttons[currentCorrectIndex].style.background = "#d4edda";
-            feedbackEl.innerHTML = `<div class="feedback-wrong">시간 초과! 정답: ${currentShuffledOptions[currentCorrectIndex]} (${currentData.ref})</div>`;
+            feedbackEl.innerHTML = getTimeUpFeedback(currentShuffledOptions[currentCorrectIndex], currentData.ref);
         } else {
-            feedbackEl.innerHTML = `<div class="feedback-wrong">시간 초과! 정답: ${currentData.answer[0]} (${currentData.ref})</div>`;
+            feedbackEl.innerHTML = getTimeUpFeedback(currentData.answer[0], currentData.ref);
         }
 
         if (lives <= 0) {
@@ -1426,7 +1533,7 @@
         }
 
         const streakMsg = streak >= 2 ? ` (${streak}연속! 🔥)` : '';
-        feedbackEl.innerHTML = `<div class="feedback-correct">정답! +${points}점${streakMsg} (${currentData.ref})</div>`;
+        feedbackEl.innerHTML = getCorrectFeedback(points, streakMsg, currentData.ref);
 
         // 라이벌 체크
         checkRival(points);
@@ -1443,7 +1550,7 @@
         quizScreen.classList.add('shake', 'bg-pulse-red');
         setTimeout(() => quizScreen.classList.remove('shake', 'bg-pulse-red'), 600);
 
-        feedbackEl.innerHTML = `<div class="feedback-wrong">오답! 정답: ${correctText} (${currentData.ref})</div>`;
+        feedbackEl.innerHTML = getWrongFeedback(correctText, currentData.ref);
     }
 
     // ─── 라이벌 체크 ───

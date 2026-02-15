@@ -3,22 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFC107">
     <title>동광교회 60주년 성경퀴즈대회</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
-            --primary-orange: #F5A623;
-            --primary-purple: #6A1B9A;
-            --gradient-main: linear-gradient(135deg, #F5A623 0%, #E91E63 50%, #6A1B9A 100%);
-            --text-dark: #333333;
+            --primary-yellow: #FFC107;
+            --primary-dark: #222222;
+            --accent-red: #E53935;
+            --gradient-main: linear-gradient(135deg, #FFC107 0%, #FF9800 50%, #E53935 100%);
+            --text-dark: #222222;
             --text-light: #ffffff;
-            --bg-light: #f9f9f9;
+            --bg-yellow: #FFD740;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: var(--bg-light);
+            background-color: #FFF8E1;
             color: var(--text-dark);
             line-height: 1.6;
         }
@@ -37,30 +42,33 @@
         /* 헤더 & 로고 */
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
         .logo-img {
-            max-width: 250px;
+            max-width: 200px;
             height: auto;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: var(--gradient-main);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--primary-dark);
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #666;
         }
 
         /* 카드 스타일 */
         .card {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
             padding: 30px;
             text-align: center;
             transition: transform 0.3s ease;
+            border: 3px solid transparent;
         }
 
         /* 버튼 스타일 */
@@ -77,19 +85,21 @@
             transition: all 0.2s;
         }
         .btn-primary {
-            background: var(--gradient-main);
-            color: white;
-            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+            background: var(--primary-dark);
+            color: var(--primary-yellow);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-weight: 900;
         }
-        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
         .btn-option {
             background: #fff;
-            border: 2px solid #ddd;
+            border: 3px solid #eee;
             color: var(--text-dark);
+            font-weight: 700;
         }
         .btn-option:hover {
-            border-color: var(--primary-orange);
-            background: #fff8e1;
+            border-color: var(--primary-yellow);
+            background: #FFFDE7;
         }
 
         /* 퀴즈 화면 요소 */
@@ -132,6 +142,113 @@
             margin-bottom: 10px;
         }
 
+        /* 타이머 바 */
+        .timer-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .timer-fill {
+            height: 100%;
+            width: 100%;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .timer-fill.green { background: #4CAF50; }
+        .timer-fill.yellow { background: #FF9800; }
+        .timer-fill.red { background: #F44336; }
+        .timer-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            transition: color 0.3s;
+        }
+        .timer-text.green { color: #4CAF50; }
+        .timer-text.yellow { color: #FF9800; }
+        .timer-text.red { color: #F44336; animation: pulse 0.5s infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* 퀴즈 HUD (목숨 + 점수) */
+        .quiz-hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 5px;
+        }
+        .hud-lives {
+            font-size: 1.5rem;
+            letter-spacing: 4px;
+            transition: all 0.3s;
+        }
+        .hud-score {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--primary-dark);
+        }
+        .hud-streak {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            min-height: 20px;
+        }
+
+        /* 애니메이션 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes heartBreak {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); color: #F44336; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        @keyframes scoreUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
+        .shake { animation: shake 0.5s ease; }
+        .pop-in { animation: popIn 0.4s ease; }
+        .score-float {
+            position: absolute;
+            right: 20px;
+            top: 50px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #4CAF50;
+            pointer-events: none;
+            animation: scoreUp 1s ease forwards;
+        }
+        .quiz-card-wrapper {
+            position: relative;
+        }
+
+        /* 게임오버 화면 */
+        .gameover-emoji {
+            font-size: 4rem;
+            margin: 15px 0;
+        }
+        .gameover-score {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent-red);
+            margin: 10px 0;
+        }
+
         /* 입력 폼 스타일 */
         .form-group {
             text-align: left;
@@ -154,7 +271,7 @@
         }
         .form-input:focus {
             outline: none;
-            border-color: var(--primary-orange);
+            border-color: var(--primary-yellow);
         }
         .form-error {
             color: #F44336;
@@ -166,8 +283,8 @@
         /* 결과 화면 */
         .score-display {
             font-size: 3rem;
-            font-weight: 800;
-            color: var(--primary-purple);
+            font-weight: 900;
+            color: var(--primary-dark);
             margin: 20px 0;
         }
         .feedback-correct { color: #4CAF50; font-weight: bold; margin-bottom: 10px; }
@@ -181,10 +298,10 @@
             font-size: 0.95rem;
         }
         .leaderboard-table th {
-            background: var(--gradient-main);
-            color: white;
+            background: var(--primary-dark);
+            color: var(--primary-yellow);
             padding: 10px 8px;
-            font-weight: 700;
+            font-weight: 900;
         }
         .leaderboard-table th:first-child { border-radius: 10px 0 0 0; }
         .leaderboard-table th:last-child { border-radius: 0 10px 0 0; }
@@ -196,7 +313,7 @@
         .leaderboard-table tr:hover td {
             background: #fff8e1;
         }
-        .leaderboard-table .rank-1 td { background: #fff3cd; font-weight: 700; }
+        .leaderboard-table .rank-1 td { background: #FFF8E1; font-weight: 900; }
         .leaderboard-table .rank-2 td { background: #f0f0f0; }
         .leaderboard-table .rank-3 td { background: #fde8d0; }
         .medal { font-size: 1.2rem; }
@@ -205,14 +322,19 @@
             padding: 30px 0;
             font-size: 0.95rem;
         }
+        #leaderboard-content {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .btn-secondary {
-            background: white;
-            border: 2px solid var(--primary-purple);
-            color: var(--primary-purple);
+            background: var(--primary-yellow);
+            border: 2px solid var(--primary-yellow);
+            color: var(--primary-dark);
             box-shadow: none;
+            font-weight: 900;
         }
         .btn-secondary:hover {
-            background: #f3e5f5;
+            background: #FFD740;
             transform: translateY(-2px);
         }
         .btn-group {
@@ -228,6 +350,150 @@
             margin-right: 8px;
         }
 
+        /* 포스터 & 시작화면 */
+        .poster-img {
+            width: 100%;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .event-info {
+            background: #FFFDE7;
+            border-radius: 14px;
+            padding: 16px;
+            margin: 15px 0;
+            text-align: left;
+            border-left: 5px solid var(--primary-yellow);
+        }
+        .event-info p {
+            font-size: 0.9rem;
+            margin: 6px 0;
+            color: #444;
+        }
+        .event-info strong {
+            color: var(--primary-dark);
+        }
+        .slogan {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: var(--accent-red);
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+        .start-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary-dark);
+            margin-bottom: 5px;
+        }
+        .start-badge {
+            display: inline-block;
+            background: var(--primary-yellow);
+            color: var(--primary-dark);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+        .scope-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .scope-tag {
+            background: var(--primary-dark);
+            color: var(--primary-yellow);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+                justify-content: flex-start;
+                padding-top: 10px;
+            }
+            header {
+                margin-bottom: 15px;
+            }
+            .logo-img {
+                max-width: 140px;
+            }
+            .title {
+                font-size: 1.3rem;
+            }
+            .card {
+                padding: 20px 16px;
+                border-radius: 18px;
+            }
+            .poster-img {
+                border-radius: 12px;
+            }
+            .start-title {
+                font-size: 1.4rem;
+            }
+            .slogan {
+                font-size: 0.95rem;
+            }
+            .event-info {
+                padding: 12px;
+            }
+            .event-info p {
+                font-size: 0.85rem;
+            }
+            .btn {
+                padding: 13px;
+                font-size: 1rem;
+            }
+            .question-text {
+                font-size: 1.05rem;
+                margin-bottom: 18px;
+            }
+            .btn-option {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+            .quiz-hud {
+                margin-bottom: 10px;
+                padding: 6px 2px;
+            }
+            .hud-lives {
+                font-size: 1.2rem;
+                letter-spacing: 2px;
+            }
+            .hud-score {
+                font-size: 1rem;
+            }
+            .timer-text {
+                font-size: 1.2rem;
+            }
+            .score-display {
+                font-size: 2.5rem;
+            }
+            .gameover-score {
+                font-size: 2rem;
+            }
+            .gameover-emoji {
+                font-size: 3rem;
+            }
+            .leaderboard-table {
+                font-size: 0.85rem;
+            }
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 8px 4px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -236,17 +502,28 @@
     <header>
         <img src="logo.png" alt="동광교회 60주년 로고" class="logo-img">
         <h1 class="title">전교인 성경퀴즈대회</h1>
-        <p>학개 / 스가랴 / 에스라 / 느헤미야</p>
+        <p class="subtitle">동광교회 창립 60주년 기념</p>
     </header>
 
     <!-- 1. 시작 화면 -->
     <div id="start-screen" class="card">
-        <h2>환영합니다!</h2>
-        <p style="margin: 20px 0; color: #666;">
-            동광교회 60주년을 기념하여<br>성경 지식을 함께 나누는 시간입니다.<br>
-            준비되셨나요?
-        </p>
-        <button class="btn btn-primary" onclick="showRegister()">참가하기</button>
+        <img src="poster.jpg" alt="성경퀴즈대회 포스터" class="poster-img">
+        <div class="start-badge">창립 60주년</div>
+        <h2 class="start-title">성경퀴즈대회</h2>
+        <div class="slogan">오직 마음 다해<br>카리스마 있게<br>세상을 정복하라!</div>
+        <div class="scope-tags">
+            <span class="scope-tag">학개</span>
+            <span class="scope-tag">스가랴</span>
+            <span class="scope-tag">에스라</span>
+            <span class="scope-tag">느헤미야</span>
+        </div>
+        <div class="event-info">
+            <p><strong>일시:</strong> 2026. 2. 22 (주일) 오후 5시</p>
+            <p><strong>장소:</strong> 사랑성전 (주일 오후예배)</p>
+            <p><strong>대상:</strong> 전교인 (유아부~장년부)</p>
+            <p><strong>시상:</strong> 팀별시상, 개인 MVP 등 푸짐한 선물</p>
+        </div>
+        <button class="btn btn-primary" onclick="showRegister()">퀴즈 참가하기</button>
         <button class="btn btn-secondary" style="margin-top:8px;" onclick="showLeaderboard()">리더보드 보기</button>
     </div>
 
@@ -267,19 +544,42 @@
         <button class="btn btn-primary" onclick="startQuiz()">퀴즈 시작하기</button>
     </div>
 
-    <div id="quiz-screen" class="card hidden">
+    <div id="quiz-screen" class="card hidden quiz-card-wrapper">
+        <div class="quiz-hud">
+            <div class="hud-lives" id="hud-lives"></div>
+            <div style="text-align:right;">
+                <div class="hud-score" id="hud-score">0점</div>
+                <div class="hud-streak" id="hud-streak"></div>
+            </div>
+        </div>
         <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <div class="timer-text green" id="timer-text">15</div>
+        <div class="timer-bar"><div class="timer-fill green" id="timer-fill"></div></div>
         <div class="badge" id="category-badge">난이도: 하</div>
         <div class="question-text" id="question">문제 내용이 여기에 나옵니다.</div>
-        
+
         <div id="options-container"></div>
-        
+
         <div id="input-container" class="hidden">
             <input type="text" id="subjective-answer" class="input-answer" placeholder="정답을 입력하세요">
             <button class="btn btn-primary" onclick="submitSubjective()">제출</button>
         </div>
 
         <div id="feedback" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- 게임오버 화면 -->
+    <div id="gameover-screen" class="card hidden">
+        <div class="gameover-emoji">💔</div>
+        <h2>게임 오버!</h2>
+        <p id="gameover-player-info"></p>
+        <div class="gameover-score" id="gameover-score">0점</div>
+        <p style="color:#666; margin: 10px 0;">목숨을 모두 잃었습니다!</p>
+        <p id="gameover-message"></p>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="restartQuiz()">다시 도전하기</button>
+            <button class="btn btn-secondary" onclick="showLeaderboard()">리더보드</button>
+        </div>
     </div>
 
     <!-- 4. 결과 화면 -->
@@ -304,68 +604,153 @@
 </div>
 
 <script>
-    // PDF 문제 데이터 (샘플 추출)
+    // ─── Firebase 초기화 ───
+    // TODO: 아래 config 값을 Firebase 콘솔에서 복사한 값으로 교체하세요
+    const firebaseConfig = {
+        apiKey: "AIzaSyDmaY9vFpL3xczQQ96lt55uqerekNfdHr8",
+        authDomain: "dkbiblequiz.firebaseapp.com",
+        projectId: "dkbiblequiz",
+        storageBucket: "dkbiblequiz.firebasestorage.app",
+        messagingSenderId: "330186942750",
+        appId: "1:330186942750:web:94bd4f131cc4bedf3a810f",
+        measurementId: "G-31TPW6GY9Y"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 문제 데이터 (PDF 원본 80문제)
     const quizData = [
-        // 학개
-        {
-            category: "학개",
-            level: "하",
-            type: "subjective",
-            question: "학개 선지자가 하나님의 말씀을 전할 때, 당시 유다의 총독은 누구였습니까?",
-            answer: ["스룹바벨"],
-            ref: "학 1:1"
-        },
-        {
-            category: "학개",
-            level: "하",
-            type: "objective",
-            question: "학개 선지자가 사역하던 시기의 바사(페르시아) 왕은 누구입니까?",
-            options: ["고레스", "다리오", "아닥사스다", "아하수에로"],
-            answer: 1, // 0부터 시작하는 인덱스 (다리오 = 2번 = 인덱스 1)
-            ref: "학 1:1"
-        },
-        // 스가랴
-        {
-            category: "스가랴",
-            level: "중",
-            type: "objective",
-            question: "스가랴 9장에서 예루살렘의 왕은 겸손하여서 '이것'을 타고 입성하신다고 예언되었습니다. 이것은 무엇입니까?",
-            options: ["백마", "병거", "나귀", "낙타"],
-            answer: 2,
-            ref: "슥 9:9"
-        },
-        // 에스라
-        {
-            category: "에스라",
-            level: "상",
-            type: "subjective",
-            question: "고레스 왕이 내어준 성전 기명(그릇) 중 '금 접시'의 개수는 정확히 몇 개였습니까? (숫자만 입력)",
-            answer: ["30", "30개", "삼십", "삼십개"],
-            ref: "에 1:9"
-        },
-        // 느헤미야
-        {
-            category: "느헤미야",
-            level: "하",
-            type: "objective",
-            question: "느헤미야와 백성들이 예루살렘 성벽을 완공하는 데 걸린 시간은 며칠입니까?",
-            options: ["40일", "52일", "70일", "120일"],
-            answer: 1,
-            ref: "느 6:15"
-        }
+        // ── 학개 (20문제) ──
+        // 하
+        { category:"학개", level:"하", type:"subjective", question:"학개 선지자가 하나님의 말씀을 전할 때, 당시 유다의 총독은 누구였습니까?", answer:["스룹바벨"], ref:"학 1:1" },
+        { category:"학개", level:"하", type:"objective", question:"학개 선지자가 사역하던 시기의 바사(페르시아) 왕은 누구입니까?", options:["고레스","다리오","아닥사스다","아하수에로"], answer:1, ref:"학 1:1" },
+        { category:"학개", level:"하", type:"subjective", question:"백성들이 성전 건축을 미룰 때, 정작 자신들은 어떤 집에 거주하고 있었습니까?", answer:["판벽한 집","판벽집","잘 꾸며진 집"], ref:"학 1:4" },
+        { category:"학개", level:"하", type:"subjective", question:"하나님께서 백성들에게 '너희는 너희의 ( )를 살필지니라'라고 반복하셨습니다. 괄호 안에 들어갈 단어는?", answer:["행위"], ref:"학 1:5,7" },
+        { category:"학개", level:"하", type:"objective", question:"학개서는 총 몇 장으로 구성되어 있습니까?", options:["1장","2장","3장","12장"], answer:1, ref:"학개서" },
+        // 중
+        { category:"학개", level:"중", type:"subjective", question:"하나님은 백성들에게 어디에 올라가서 나무를 가져다가 성전을 건축하라고 명령하셨습니까?", answer:["산"], ref:"학 1:8" },
+        { category:"학개", level:"중", type:"objective", question:"백성들이 성전 재건을 소홀히 한 결과로 나타난 현상이 아닌 것은?", options:["많이 뿌릴지라도 수확이 적음","먹을지라도 배부르지 못함","입어도 따뜻하지 못함","대적의 침공을 받아 성읍이 무너짐"], answer:3, ref:"학 1:6" },
+        { category:"학개", level:"중", type:"subjective", question:"학개의 독려를 듣고 성전 공사를 시작한 유다의 대제사장 이름은?", answer:["여호수아"], ref:"학 1:12" },
+        { category:"학개", level:"중", type:"objective", question:"솔로몬 성전의 영광을 기억하는 노인들이 새 성전을 보았을 때 어떻게 느꼈습니까?", options:["매우 웅장해 보였다","보잘것없어 보였다","황금빛으로 빛났다","무서워 보였다"], answer:1, ref:"학 2:3" },
+        { category:"학개", level:"중", type:"subjective", question:"하나님께서 '조금 있으면 내가 하늘과 땅과 바다와 ( )를 진동시킬 것이요'라고 말씀하셨습니다. 괄호 안에 들어갈 단어는?", answer:["육지"], ref:"학 2:6" },
+        { category:"학개", level:"중", type:"subjective", question:"하나님께서 성전을 재건하면 '이곳에 ( )을 주리라'고 약속하셨습니다. 괄호 안에 들어갈 단어는?", answer:["평강"], ref:"학 2:9" },
+        { category:"학개", level:"중", type:"objective", question:"학개 2장에서 거룩한 고기를 싼 옷자락이 다른 음식에 닿으면 그 음식이 성물이 됩니까?", options:["된다","안 된다","상황에 따라 다르다","알 수 없다"], answer:1, ref:"학 2:12" },
+        { category:"학개", level:"중", type:"subjective", question:"시체를 만져 부정하여진 자가 무엇을 만지면 그것이 어떻게 됩니까?", answer:["부정하여진다","부정해진다"], ref:"학 2:13" },
+        { category:"학개", level:"중", type:"objective", question:"지대(기초)를 쌓기 전에는 이십 고르 곡식 더미에 이른즉 실제로는 몇 고르뿐이었습니까?", options:["오 고르","십 고르","십오 고르","이십 고르"], answer:1, ref:"학 2:16" },
+        { category:"학개", level:"중", type:"subjective", question:"포도즙 틀에서 오십 고르를 길으려 한즉 실제로는 몇 고르뿐이었습니까?", answer:["이십","이십 고르","20","20고르"], ref:"학 2:16" },
+        // 상
+        { category:"학개", level:"상", type:"subjective", question:"학개 선지자에게 여호와의 말씀이 처음 임한 날짜는 구체적으로 언제입니까?", answer:["다리오 왕 제이년 여섯째 달 초하루","여섯째 달 초하루","6월 1일"], ref:"학 1:1" },
+        { category:"학개", level:"상", type:"objective", question:"백성들이 마음이 감동되어 여호와의 전 공사를 실제로 시작한 날짜는?", options:["여섯째 달 이십사일","일곱째 달 이십일일","아홉째 달 이십사일","열째 달 초하루"], answer:0, ref:"학 1:15" },
+        { category:"학개", level:"상", type:"subjective", question:"하나님께서 '오늘부터는 내가 너희에게 복을 주리라'고 선포하신 날짜는 아홉째 달 며칠입니까?", answer:["이십사일","24일"], ref:"학 2:18-19" },
+        { category:"학개", level:"상", type:"subjective", question:"학개 2:23에서 하나님은 스룹바벨을 무엇으로 삼겠다고 말씀하셨습니까?", answer:["인장","도장","인"], ref:"학 2:23" },
+        { category:"학개", level:"상", type:"objective", question:"학개서 2장에서 여호와의 말씀이 임한 세 번째 날짜(이전 영광을 본 자들을 위로하실 때)는?", options:["여섯째 달 이십사일","일곱째 달 이십일일","아홉째 달 이십사일","열째 달 초하루"], answer:1, ref:"학 2:1" },
+
+        // ── 스가랴 (20문제) ──
+        // 하
+        { category:"스가랴", level:"하", type:"subjective", question:"스가랴 선지자는 누구의 손자입니까?", answer:["잇도"], ref:"슥 1:1" },
+        { category:"스가랴", level:"하", type:"objective", question:"스가랴 3장에서 대제사장 여호수아의 오른쪽에 서서 대적한 존재는?", options:["가브리엘","미가엘","사탄","벨리알"], answer:2, ref:"슥 3:1" },
+        { category:"스가랴", level:"하", type:"subjective", question:"스가랴서는 총 몇 장으로 구성되어 있습니까?", answer:["14","14장","십사장"], ref:"스가랴서" },
+        { category:"스가랴", level:"하", type:"subjective", question:"'이는 힘으로 되지 아니하며 능력으로 되지 아니하고 오직 나의 ( )으로 되느니라' 괄호 안에 들어갈 단어는?", answer:["영","신"], ref:"슥 4:6" },
+        { category:"스가랴", level:"하", type:"objective", question:"스가랴 9장에서 예루살렘의 왕이 겸손하여서 타고 입성하는 것은?", options:["백마","병거","나귀","낙타"], answer:2, ref:"슥 9:9" },
+        // 중
+        { category:"스가랴", level:"중", type:"subjective", question:"스가랴가 본 첫 번째 환상에서, 골짜기 속 화석류나무 사이에 선 자가 탄 말의 색깔은?", answer:["붉은색","홍마","붉은"], ref:"슥 1:8" },
+        { category:"스가랴", level:"중", type:"objective", question:"유다와 이스라엘을 흩뜨린 '네 뿔'을 겁주기 위해 등장한 사람들은?", options:["대장장이 네 명","제사장 네 명","파수꾼 네 명","농부 네 명"], answer:0, ref:"슥 1:20" },
+        { category:"스가랴", level:"중", type:"subjective", question:"천사가 대제사장 여호수아의 더러운 옷을 벗기고 무엇을 입혀주었습니까?", answer:["아름다운 옷"], ref:"슥 3:4" },
+        { category:"스가랴", level:"중", type:"objective", question:"스가랴 4장에서 순금 등잔대 곁의 '두 감람나무'는 무엇을 상징합니까?", options:["두 천사","기름 부음 받은 자 둘","이스라엘과 유다","구약과 신약"], answer:1, ref:"슥 4:14" },
+        { category:"스가랴", level:"중", type:"subjective", question:"날아가는 두루마리 환상에서 그 두루마리의 너비는 몇 규빗입니까?", answer:["십 규빗","10규빗","10","십"], ref:"슥 5:2" },
+        { category:"스가랴", level:"중", type:"objective", question:"에바(곡식 측정 용기) 속에 앉아 있는 여인의 이름은?", options:["질투","탐욕","교만","악"], answer:3, ref:"슥 5:8" },
+        { category:"스가랴", level:"중", type:"subjective", question:"네 병거 환상 중, 넷째 병거에 매여 있던 말들은 어떤 말입니까?", answer:["어롱지고 건장한 말","어롱진 말","건장한 말"], ref:"슥 6:3" },
+        { category:"스가랴", level:"중", type:"subjective", question:"스가랴 선지자가 양 떼를 먹이기 위해 취한 두 막대기의 이름은?", answer:["은총과 연합","은총, 연합","은총 연합"], ref:"슥 11:7" },
+        { category:"스가랴", level:"중", type:"objective", question:"벧엘 사람들이 '우리가 여러 해 동안 행한 대로 몇 월에 울며 근신하리이까'라고 물었습니까?", options:["오월","칠월","구월","시월"], answer:0, ref:"슥 7:3" },
+        { category:"스가랴", level:"중", type:"objective", question:"스가랴 14장에서 이방 나라들이 매년 예루살렘에 올라와 지켜야 할 절기는?", options:["유월절","칠칠절","초막절","수장절"], answer:2, ref:"슥 14:16" },
+        // 상
+        { category:"스가랴", level:"상", type:"subjective", question:"스가랴 선지자에게 여호와의 말씀이 처음 임한 때는 다리오 왕 제이년 몇째 달입니까?", answer:["여덟째 달","8월","팔월"], ref:"슥 1:1" },
+        { category:"스가랴", level:"상", type:"objective", question:"스가랴가 여덟 가지 환상을 하룻밤에 모두 본 날짜는?", options:["여덟째 달 초하루","아홉째 달 이십사일","열한째 달 이십사일","열째 달 십일"], answer:2, ref:"슥 1:7" },
+        { category:"스가랴", level:"상", type:"subjective", question:"바벨론에서 돌아온 자들이 낸 은과 금으로 관을 만들어 누구의 머리에 씌웠습니까?", answer:["여호수아","대제사장 여호수아"], ref:"슥 6:11" },
+        { category:"스가랴", level:"상", type:"subjective", question:"선지자가 자신의 품삯으로 받은 은의 개수는 몇 개입니까?", answer:["삼십","30","삼십 개","30개"], ref:"슥 11:12" },
+        { category:"스가랴", level:"상", type:"objective", question:"하나님께서 '예루살렘이 진리의 성읍이라 일컬음을 받겠다'고 말씀하신 때는 다리오 왕 제사년 아홉째 달 며칠입니까?", options:["초하루","사일","십사일","이십사일"], answer:1, ref:"슥 7:1" },
+
+        // ── 에스라 (20문제) ──
+        // 하
+        { category:"에스라", level:"하", type:"objective", question:"바사 왕 고레스가 성전 건축 조서를 내린 때는 그의 통치 제 몇 년입니까?", options:["제1년","제3년","제7년","제10년"], answer:0, ref:"에 1:1" },
+        { category:"에스라", level:"하", type:"subjective", question:"포로에서 돌아온 백성들이 제단을 만들고 가장 먼저 지킨 절기는?", answer:["초막절"], ref:"에 3:4" },
+        { category:"에스라", level:"하", type:"subjective", question:"학사 에스라는 이스라엘의 첫 대제사장이었던 누구의 후손입니까?", answer:["아론"], ref:"에 7:1-5" },
+        { category:"에스라", level:"하", type:"subjective", question:"에스라가 가졌던 두 가지 신분(직분)은 무엇입니까?", answer:["제사장과 학사","제사장, 학사","제사장 학사"], ref:"에 7:11" },
+        { category:"에스라", level:"하", type:"objective", question:"성전 건축을 방해하던 사람들이 글을 올려 공사를 중단시킨 바사의 왕은?", options:["고레스","다리오","아닥사스다","아하수에로"], answer:2, ref:"에 4:7,23-24" },
+        // 중
+        { category:"에스라", level:"중", type:"subjective", question:"제1차 포로 귀환 때 총독으로 임명되어 성전 기구들을 인계받은 인물은?", answer:["세스바살"], ref:"에 1:8,5:14" },
+        { category:"에스라", level:"중", type:"objective", question:"성전 지대(기초)를 놓을 때, 제사장들이 예복을 입고 들고 서서 여호와를 찬송한 것은?", options:["나팔","수금","비파","제금"], answer:0, ref:"에 3:10" },
+        { category:"에스라", level:"중", type:"subjective", question:"대적들의 방해로 중단되었던 성전 공사가 다시 시작된 것은 어느 왕이 즉위한 후입니까?", answer:["다리오","다리오 왕"], ref:"에 4:5" },
+        { category:"에스라", level:"중", type:"objective", question:"성전이 완공된 날은 다리오 왕 제6년 몇 월 며칠입니까?", options:["정월 십사일","이월 십일","아달월 삼일","기슬래월 사일"], answer:2, ref:"에 6:15" },
+        { category:"에스라", level:"중", type:"subjective", question:"에스라가 왕에게 무엇이든 받을 수 있었던 이유는 성경에서 무엇이라 설명합니까?", answer:["하나님 여호와의 도우심","여호와의 도우심","하나님의 도우심"], ref:"에 7:6" },
+        { category:"에스라", level:"중", type:"objective", question:"에스라가 아하와 강가에서 금식하며 기도한 이유는?", options:["양식이 부족해서","보병과 마병을 왕에게 구하기 부끄러워서","비가 너무 많이 와서","전염병이 돌아서"], answer:1, ref:"에 8:22" },
+        { category:"에스라", level:"중", type:"subjective", question:"에스라가 백성들의 이방 통혼 소식을 듣고 취한 첫 번째 행동은?", answer:["속옷과 겉옷을 찢고","옷을 찢고","옷을 찢음"], ref:"에 9:3" },
+        { category:"에스라", level:"중", type:"objective", question:"이방 여인과 결혼한 죄를 회개하기 위해 모인 백성들이 떨고 있었던 이유는 '이 일' 때문과 또 무엇 때문?", options:["배고픔","큰 비","추위","대적의 침공"], answer:1, ref:"에 10:9" },
+        { category:"에스라", level:"중", type:"subjective", question:"이방 여인과 결혼한 자들을 조사하여 일을 마무리하는 데 걸린 기간은?", answer:["석 달","3개월","삼 개월"], ref:"에 10:16-17" },
+        { category:"에스라", level:"중", type:"subjective", question:"성전 봉헌식을 마친 후 정월 십사일에 백성들이 지킨 절기는?", answer:["유월절"], ref:"에 6:19" },
+        // 상
+        { category:"에스라", level:"상", type:"objective", question:"고레스 왕이 내어준 성전 기명 중 '금 접시'의 개수는?", options:["10개","30개","100개","1,000개"], answer:1, ref:"에 1:9" },
+        { category:"에스라", level:"상", type:"subjective", question:"제1차 포로 귀환 때 돌아온 전체 회중의 합계는 총 몇 명입니까?", answer:["42360명","42,360명","42360","사만이천삼백육십"], ref:"에 2:64" },
+        { category:"에스라", level:"상", type:"subjective", question:"성전 봉헌식 때 이스라엘 전체 지파 수를 따라 속죄제로 드린 수염소는 몇 마리?", answer:["12","12마리","십이","열두"], ref:"에 6:17" },
+        { category:"에스라", level:"상", type:"objective", question:"에스라가 '가시뱌' 지방으로 사람을 보내 데려온 '명철한 사람'의 이름은?", options:["세레뱌","도비야","산발랏","게셈"], answer:0, ref:"에 8:18" },
+        { category:"에스라", level:"상", type:"subjective", question:"에스라가 바벨론에서 출발하여 예루살렘에 도착하기까지 걸린 기간은?", answer:["4개월","사개월","넉 달"], ref:"에 7:9" },
+
+        // ── 느헤미야 (20문제) ──
+        // 하
+        { category:"느헤미야", level:"하", type:"subjective", question:"느헤미야가 바사 궁에서 맡았던 직책은?", answer:["술 관원","술관원"], ref:"느 1:11" },
+        { category:"느헤미야", level:"하", type:"objective", question:"예루살렘 성벽이 허물어졌다는 소식을 느헤미야에게 전해준 형제는?", options:["하나니","하나냐","산발랏","도비야"], answer:0, ref:"느 1:2" },
+        { category:"느헤미야", level:"하", type:"subjective", question:"느헤미야가 예루살렘 성벽 재건을 가장 집요하게 방해했던 두 인물은?", answer:["산발랏과 도비야","산발랏, 도비야"], ref:"느 2:10" },
+        { category:"느헤미야", level:"하", type:"objective", question:"느헤미야와 백성들이 예루살렘 성벽을 완공하는 데 걸린 시간은?", options:["40일","52일","70일","120일"], answer:1, ref:"느 6:15" },
+        { category:"느헤미야", level:"하", type:"subjective", question:"성벽 재건 후 학사 에스라가 율법책을 낭독할 때 백성들은 어디에 모여 있었습니까?", answer:["수문 앞 광장","수문 앞"], ref:"느 8:1" },
+        // 중
+        { category:"느헤미야", level:"중", type:"objective", question:"느헤미야가 밤에 몰래 성벽을 살펴볼 때 타고 나간 것은?", options:["병거","낙타","짐승","수레"], answer:2, ref:"느 2:12" },
+        { category:"느헤미야", level:"중", type:"subjective", question:"대적들의 위협이 심해지자 한 손에는 연장을, 다른 한 손에는 무엇을 잡게 했습니까?", answer:["병기","무기","칼","창"], ref:"느 4:17" },
+        { category:"느헤미야", level:"중", type:"objective", question:"느헤미야가 귀족들과 민장들을 꾸짖어 폐지하게 한 것은?", options:["세금","제사","이자","부역"], answer:2, ref:"느 5:7" },
+        { category:"느헤미야", level:"중", type:"subjective", question:"성벽 봉헌할 때 찬양하는 자들이 동원한 악기는?", answer:["제금, 비파, 수금","제금 비파 수금"], ref:"느 12:27" },
+        { category:"느헤미야", level:"중", type:"objective", question:"에스라가 율법책을 펴서 읽을 때 모든 백성이 취한 행동은?", options:["일어섰다","엎드렸다","춤을 췄다","통곡했다"], answer:0, ref:"느 8:5" },
+        { category:"느헤미야", level:"중", type:"subjective", question:"양문을 건축하고 성별하여 문짝을 단 사람은?", answer:["엘리아십","대제사장 엘리아십"], ref:"느 3:1" },
+        { category:"느헤미야", level:"중", type:"objective", question:"산발랏과 도비야가 느헤미야를 유인하기 위해 만나자고 제안한 곳은?", options:["여리고 평지","오노 평지","기드론 골짜기","힌놈의 골짜기"], answer:1, ref:"느 6:2" },
+        { category:"느헤미야", level:"중", type:"subjective", question:"성벽 완공 후 예루살렘 성안에 거주할 사람을 정하기 위해 사용한 방법은?", answer:["제비 뽑기","제비뽑기"], ref:"느 11:1" },
+        { category:"느헤미야", level:"중", type:"subjective", question:"느헤미야 13장에서 안식일 전날 어두워갈 때 느헤미야가 닫게 한 것은?", answer:["성문"], ref:"느 13:19" },
+        { category:"느헤미야", level:"중", type:"objective", question:"성벽 재건에 참여한 '드고아 사람'들 중 공사를 분담하지 않은 자들은?", options:["부인들","자녀들","종들","귀족들"], answer:3, ref:"느 3:5" },
+        // 상
+        { category:"느헤미야", level:"상", type:"subjective", question:"느헤미야가 예루살렘의 소식을 처음 들었을 때의 정확한 시기는?", answer:["아닥사스다 왕 제이십년 기슬래월","기슬래월"], ref:"느 1:1" },
+        { category:"느헤미야", level:"상", type:"objective", question:"느헤미야가 유다 총독으로 사역한 첫 번째 기간은 총 몇 년입니까?", options:["5년","7년","10년","12년"], answer:3, ref:"느 5:14" },
+        { category:"느헤미야", level:"상", type:"subjective", question:"도비야가 '그들이 건축하는 돌 성벽은 ( )가 올라가도 곧 무너지리라'고 조롱했습니다. 괄호 안의 동물은?", answer:["여우"], ref:"느 4:3" },
+        { category:"느헤미야", level:"상", type:"objective", question:"성벽이 완공된 구체적 날짜는?", options:["엘룰월 이십오일","기슬래월 초하루","니산월 십사일","아달월 삼일"], answer:0, ref:"느 6:15" },
+        { category:"느헤미야", level:"상", type:"subjective", question:"느헤미야 13장에서 느헤미야가 바사로 돌아간 사이 대제사장 엘리아십이 성전에 방을 만들어 준 대적은?", answer:["도비야"], ref:"느 13:4-5" }
     ];
 
+    // 문제 셔플 함수 (Fisher-Yates)
+    function shuffleArray(arr) {
+        const shuffled = [...arr];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
+    let shuffledQuiz = [];
     let currentQuestionIndex = 0;
     let score = 0;
+    let lives = 3;
+    let streak = 0;
     let isAnswering = true;
     let playerName = '';
     let playerGroup = '';
+    let timer = null;
+    let timeLeft = 0;
+    let currentCorrectIndex = 0;
+    let currentShuffledOptions = [];
+    const TIME_LIMITS = { 'objective': 10, 'subjective': 15 };
 
     const startScreen = document.getElementById('start-screen');
     const registerScreen = document.getElementById('register-screen');
     const quizScreen = document.getElementById('quiz-screen');
     const resultScreen = document.getElementById('result-screen');
     const leaderboardScreen = document.getElementById('leaderboard-screen');
+    const gameoverScreen = document.getElementById('gameover-screen');
     const questionEl = document.getElementById('question');
     const optionsContainer = document.getElementById('options-container');
     const inputContainer = document.getElementById('input-container');
@@ -373,9 +758,118 @@
     const progressBar = document.getElementById('progress');
     const feedbackEl = document.getElementById('feedback');
 
+    // 주관식 Enter키 제출
+    document.getElementById('subjective-answer').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitSubjective();
+        }
+    });
+
     function hideAllScreens() {
-        [startScreen, registerScreen, quizScreen, resultScreen, leaderboardScreen]
+        [startScreen, registerScreen, quizScreen, resultScreen, leaderboardScreen, gameoverScreen]
             .forEach(s => s.classList.add('hidden'));
+    }
+
+    function updateHUD() {
+        const heartsEl = document.getElementById('hud-lives');
+        heartsEl.innerHTML = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+        document.getElementById('hud-score').textContent = `${score}점`;
+        const streakEl = document.getElementById('hud-streak');
+        streakEl.textContent = streak >= 2 ? `${streak}연속 정답! 🔥` : '';
+    }
+
+    function showScoreFloat(points) {
+        const floater = document.createElement('div');
+        floater.className = 'score-float';
+        floater.textContent = `+${points}`;
+        quizScreen.appendChild(floater);
+        setTimeout(() => floater.remove(), 1000);
+    }
+
+    function loseLife() {
+        lives--;
+        const heartsEl = document.getElementById('hud-lives');
+        heartsEl.classList.add('shake');
+        setTimeout(() => heartsEl.classList.remove('shake'), 500);
+        updateHUD();
+    }
+
+    function calcPoints(level) {
+        const levelBonus = level === '상' ? 30 : level === '중' ? 20 : 10;
+        const streakBonus = streak >= 2 ? streak * 5 : 0;
+        const timeBonus = Math.floor(timeLeft / 2);
+        return levelBonus + streakBonus + timeBonus;
+    }
+
+    function startTimer(type) {
+        clearInterval(timer);
+        const total = TIME_LIMITS[type] || 10;
+        timeLeft = total;
+        const timerText = document.getElementById('timer-text');
+        const timerFill = document.getElementById('timer-fill');
+
+        // 초기 상태: 100%
+        timerFill.style.transition = 'none';
+        timerFill.style.width = '100%';
+        timerFill.className = 'timer-fill green';
+        timerText.textContent = total;
+        timerText.className = 'timer-text green';
+
+        // 다음 프레임에서 선형 트랜지션으로 0%까지 줄이기
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                timerFill.style.transition = `width ${total}s linear, background 0.3s`;
+                timerFill.style.width = '0%';
+            });
+        });
+
+        timer = setInterval(() => {
+            timeLeft--;
+            timerText.textContent = Math.max(timeLeft, 0);
+            const pct = timeLeft / total;
+            const color = pct > 0.5 ? 'green' : pct > 0.25 ? 'yellow' : 'red';
+            timerText.className = 'timer-text ' + color;
+            timerFill.className = 'timer-fill ' + color;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                timeUp();
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timer);
+        const timerFill = document.getElementById('timer-fill');
+        // 현재 위치에서 멈추기
+        const currentWidth = timerFill.getBoundingClientRect().width;
+        const parentWidth = timerFill.parentElement.getBoundingClientRect().width;
+        timerFill.style.transition = 'none';
+        timerFill.style.width = (currentWidth / parentWidth * 100) + '%';
+    }
+
+    function timeUp() {
+        if (!isAnswering) return;
+        isAnswering = false;
+        const currentData = shuffledQuiz[currentQuestionIndex];
+        streak = 0;
+        loseLife();
+        quizScreen.classList.add('shake');
+        setTimeout(() => quizScreen.classList.remove('shake'), 500);
+
+        if (currentData.type === 'objective') {
+            const buttons = optionsContainer.getElementsByTagName('button');
+            buttons[currentCorrectIndex].style.background = "#d4edda";
+            feedbackEl.innerHTML = `<div class="feedback-wrong">시간 초과! 정답: ${currentShuffledOptions[currentCorrectIndex]} (${currentData.ref})</div>`;
+        } else {
+            feedbackEl.innerHTML = `<div class="feedback-wrong">시간 초과! 정답: ${currentData.answer[0]} (${currentData.ref})</div>`;
+        }
+
+        if (lives <= 0) {
+            setTimeout(showGameOver, 1500);
+        } else {
+            setTimeout(nextQuestion, 2000);
+        }
     }
 
     function showRegister() {
@@ -421,8 +915,12 @@
 
         hideAllScreens();
         quizScreen.classList.remove('hidden');
+        shuffledQuiz = shuffleArray(quizData);
         currentQuestionIndex = 0;
         score = 0;
+        lives = 3;
+        streak = 0;
+        updateHUD();
         loadQuestion();
     }
 
@@ -431,23 +929,30 @@
         feedbackEl.innerHTML = "";
         document.getElementById('subjective-answer').value = "";
         
-        const currentData = quizData[currentQuestionIndex];
+        const currentData = shuffledQuiz[currentQuestionIndex];
         
         // 진행률 업데이트
-        const progressPercent = ((currentQuestionIndex) / quizData.length) * 100;
+        const progressPercent = ((currentQuestionIndex) / shuffledQuiz.length) * 100;
         progressBar.style.width = `${progressPercent}%`;
 
         // 문제 세팅
         badgeEl.textContent = `${currentData.category} | 난이도: ${currentData.level}`;
         questionEl.textContent = `Q${currentQuestionIndex + 1}. ${currentData.question}`;
+        startTimer(currentData.type);
 
         // 타입별 UI 분기
         if (currentData.type === 'objective') {
             optionsContainer.classList.remove('hidden');
             inputContainer.classList.add('hidden');
             optionsContainer.innerHTML = '';
-            
-            currentData.options.forEach((option, index) => {
+
+            // 보기 순서 셔플 (정답 편중 방지)
+            const indices = currentData.options.map((_, i) => i);
+            const shuffledIndices = shuffleArray(indices);
+            currentShuffledOptions = shuffledIndices.map(i => currentData.options[i]);
+            currentCorrectIndex = shuffledIndices.indexOf(currentData.answer);
+
+            currentShuffledOptions.forEach((option, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'btn btn-option';
                 btn.textContent = `${index + 1}. ${option}`;
@@ -460,27 +965,50 @@
         }
     }
 
+    function handleCorrect(currentData) {
+        stopTimer();
+        streak++;
+        const points = calcPoints(currentData.level);
+        score += points;
+        showScoreFloat(points);
+        updateHUD();
+        const streakMsg = streak >= 2 ? ` (${streak}연속! 🔥)` : '';
+        feedbackEl.innerHTML = `<div class="feedback-correct">정답! +${points}점${streakMsg} (${currentData.ref})</div>`;
+    }
+
+    function handleWrong(currentData, correctText) {
+        stopTimer();
+        streak = 0;
+        loseLife();
+        quizScreen.classList.add('shake');
+        setTimeout(() => quizScreen.classList.remove('shake'), 500);
+        feedbackEl.innerHTML = `<div class="feedback-wrong">오답! 정답: ${correctText} (${currentData.ref})</div>`;
+    }
+
     // 객관식 정답 확인
     function checkAnswer(selectedIndex) {
         if (!isAnswering) return;
         isAnswering = false;
 
-        const currentData = quizData[currentQuestionIndex];
+        const currentData = shuffledQuiz[currentQuestionIndex];
         const buttons = optionsContainer.getElementsByTagName('button');
 
-        if (selectedIndex === currentData.answer) {
-            score += 20; // 문제당 20점 (5문제 기준)
+        if (selectedIndex === currentCorrectIndex) {
             buttons[selectedIndex].style.background = "#d4edda";
             buttons[selectedIndex].style.borderColor = "#c3e6cb";
-            feedbackEl.innerHTML = `<div class="feedback-correct">정답입니다! (${currentData.ref})</div>`;
+            handleCorrect(currentData);
         } else {
             buttons[selectedIndex].style.background = "#f8d7da";
             buttons[selectedIndex].style.borderColor = "#f5c6cb";
-            buttons[currentData.answer].style.background = "#d4edda"; // 정답 표시
-            feedbackEl.innerHTML = `<div class="feedback-wrong">오답입니다. 정답은 ${currentData.options[currentData.answer]} (${currentData.ref})</div>`;
+            buttons[currentCorrectIndex].style.background = "#d4edda";
+            handleWrong(currentData, currentShuffledOptions[currentCorrectIndex]);
         }
 
-        setTimeout(nextQuestion, 2000);
+        if (lives <= 0) {
+            setTimeout(showGameOver, 1500);
+        } else {
+            setTimeout(nextQuestion, 2000);
+        }
     }
 
     // 주관식 정답 확인
@@ -489,29 +1017,48 @@
         isAnswering = false;
 
         const input = document.getElementById('subjective-answer');
-        const userValue = input.value.trim().replace(/\s/g, ''); // 공백 제거 후 비교
-        const currentData = quizData[currentQuestionIndex];
-        
-        // 정답 배열 중 하나라도 맞으면 정답 처리
-        const isCorrect = currentData.answer.some(ans => userValue.includes(ans) || ans === userValue);
+        const userValue = input.value.trim().replace(/\s/g, '');
+        const currentData = shuffledQuiz[currentQuestionIndex];
+        const isCorrect = currentData.answer.some(ans => {
+            const normAns = ans.replace(/\s/g, '');
+            return userValue === normAns;
+        });
 
         if (isCorrect) {
-            score += 20;
-            feedbackEl.innerHTML = `<div class="feedback-correct">정답입니다! (${currentData.ref})</div>`;
+            handleCorrect(currentData);
         } else {
-            feedbackEl.innerHTML = `<div class="feedback-wrong">오답입니다. 정답: ${currentData.answer[0]} (${currentData.ref})</div>`;
+            handleWrong(currentData, currentData.answer[0]);
         }
 
-        setTimeout(nextQuestion, 2000);
+        if (lives <= 0) {
+            setTimeout(showGameOver, 1500);
+        } else {
+            setTimeout(nextQuestion, 2000);
+        }
     }
 
     function nextQuestion() {
         currentQuestionIndex++;
-        if (currentQuestionIndex < quizData.length) {
+        if (currentQuestionIndex < shuffledQuiz.length) {
             loadQuestion();
         } else {
             showResult();
         }
+    }
+
+    function showGameOver() {
+        hideAllScreens();
+        gameoverScreen.classList.remove('hidden');
+
+        document.getElementById('gameover-player-info').textContent =
+            `${playerGroup} · ${playerName}`;
+        document.getElementById('gameover-score').textContent = `${score}점`;
+
+        const msgEl = document.getElementById('gameover-message');
+        if (score > 0) msgEl.textContent = "아깝네요! 다시 도전해보세요! 💪";
+        else msgEl.textContent = "다음엔 더 잘할 수 있어요! 화이팅! 📖";
+
+        saveScore(playerGroup, playerName, score);
     }
 
     function showResult() {
@@ -525,11 +1072,10 @@
         finalScoreEl.textContent = `${score}점`;
 
         const msgEl = document.getElementById('result-message');
-        if(score === 100) msgEl.textContent = "대단합니다! 성경 박사님이시네요! 🎉";
-        else if(score >= 60) msgEl.textContent = "참 잘하셨습니다! 말씀과 더욱 가까워지세요. 🙏";
-        else msgEl.textContent = "아쉽네요! 다시 한번 도전해보세요. 💪";
+        if (lives === 3) msgEl.textContent = "완벽합니다! 목숨을 하나도 안 잃었어요! 🎉";
+        else if (lives === 2) msgEl.textContent = "훌륭합니다! 성경 박사님이시네요! ✨";
+        else msgEl.textContent = "간신히 살아남았네요! 대단해요! 🙏";
 
-        // 리더보드에 점수 저장
         saveScore(playerGroup, playerName, score);
     }
 
@@ -538,56 +1084,63 @@
         registerScreen.classList.remove('hidden');
     }
 
-    // ─── 리더보드 (localStorage) ───
-    function getLeaderboard() {
-        const data = localStorage.getItem('bibleQuizLeaderboard');
-        return data ? JSON.parse(data) : [];
+    // ─── 리더보드 (Firestore) ───
+    function esc(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
     }
 
     function saveScore(group, name, score) {
-        const board = getLeaderboard();
-        board.push({
-            group,
-            name,
-            score,
-            date: new Date().toLocaleDateString('ko-KR')
+        db.collection('scores').add({
+            group: group,
+            name: name,
+            score: score,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function(error) {
+            console.error('점수 저장 실패:', error);
         });
-        // 점수 내림차순 정렬, 동점이면 최신 기록 우선
-        board.sort((a, b) => b.score - a.score);
-        // 최대 50개만 보관
-        if (board.length > 50) board.length = 50;
-        localStorage.setItem('bibleQuizLeaderboard', JSON.stringify(board));
     }
 
-    function renderLeaderboard() {
-        const board = getLeaderboard();
+    async function renderLeaderboard() {
         const container = document.getElementById('leaderboard-content');
+        container.innerHTML = '<div class="leaderboard-empty">불러오는 중...</div>';
 
-        if (board.length === 0) {
-            container.innerHTML = '<div class="leaderboard-empty">아직 기록이 없습니다.<br>첫 번째 도전자가 되어보세요!</div>';
-            return;
+        try {
+            const snapshot = await db.collection('scores')
+                .orderBy('score', 'desc')
+                .limit(20)
+                .get();
+
+            if (snapshot.empty) {
+                container.innerHTML = '<div class="leaderboard-empty">아직 기록이 없습니다.<br>첫 번째 도전자가 되어보세요!</div>';
+                return;
+            }
+
+            const medals = ['🥇', '🥈', '🥉'];
+            let html = `<table class="leaderboard-table">
+                <thead><tr>
+                    <th>순위</th><th>소속</th><th>이름</th><th>점수</th>
+                </tr></thead><tbody>`;
+
+            snapshot.docs.forEach((doc, i) => {
+                const entry = doc.data();
+                const rankClass = i < 3 ? ` class="rank-${i + 1}"` : '';
+                const rankText = i < 3 ? `<span class="medal">${medals[i]}</span>` : (i + 1);
+                html += `<tr${rankClass}>
+                    <td>${rankText}</td>
+                    <td>${esc(entry.group)}</td>
+                    <td>${esc(entry.name)}</td>
+                    <td><strong>${entry.score}점</strong></td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('리더보드 조회 실패:', error);
+            container.innerHTML = '<div class="leaderboard-empty">데이터를 불러오지 못했습니다.</div>';
         }
-
-        const medals = ['🥇', '🥈', '🥉'];
-        let html = `<table class="leaderboard-table">
-            <thead><tr>
-                <th>순위</th><th>소속</th><th>이름</th><th>점수</th><th>날짜</th>
-            </tr></thead><tbody>`;
-
-        board.slice(0, 20).forEach((entry, i) => {
-            const rankClass = i < 3 ? ` class="rank-${i + 1}"` : '';
-            const rankText = i < 3 ? `<span class="medal">${medals[i]}</span>` : (i + 1);
-            html += `<tr${rankClass}>
-                <td>${rankText}</td>
-                <td>${entry.group}</td>
-                <td>${entry.name}</td>
-                <td><strong>${entry.score}점</strong></td>
-                <td>${entry.date}</td>
-            </tr>`;
-        });
-
-        html += '</tbody></table>';
-        container.innerHTML = html;
     }
 </script>
 

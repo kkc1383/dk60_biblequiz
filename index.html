@@ -837,26 +837,6 @@
             cursor: pointer;
             user-select: none;
         }
-        .feedback-pw-group {
-            margin-top: 8px;
-            display: none;
-        }
-        .feedback-pw-group.show {
-            display: block;
-        }
-        .feedback-pw-group input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-family: 'Noto Sans KR', sans-serif;
-            transition: border-color 0.2s;
-        }
-        .feedback-pw-group input:focus {
-            outline: none;
-            border-color: var(--primary-dark);
-        }
         .feedback-list {
             margin-top: 20px;
             text-align: left;
@@ -1332,11 +1312,8 @@
         </div>
         <textarea id="feedback-input" class="feedback-textarea" placeholder="의견을 자유롭게 작성해주세요..."></textarea>
         <div class="feedback-secret-row">
-            <input type="checkbox" id="feedback-secret" onchange="toggleSecretPw()">
+            <input type="checkbox" id="feedback-secret">
             <label for="feedback-secret">비밀글</label>
-        </div>
-        <div class="feedback-pw-group" id="feedback-pw-group">
-            <input type="password" id="feedback-pw" placeholder="비밀번호를 설정하세요">
         </div>
         <button class="btn btn-primary" style="margin-top: 12px;" onclick="submitFeedback()">피드백 보내기</button>
         <div id="feedback-success" class="feedback-success hidden">감사합니다! 피드백이 등록되었습니다.</div>
@@ -2577,12 +2554,7 @@
 
     // ─── 피드백 기능 (Firestore 기반) ───
     let cachedFeedbacks = []; // 로드된 피드백 캐시
-
-    function toggleSecretPw() {
-        const checked = document.getElementById('feedback-secret').checked;
-        document.getElementById('feedback-pw-group').classList.toggle('show', checked);
-        if (!checked) document.getElementById('feedback-pw').value = '';
-    }
+    const FB_ADMIN_PW = 'rkdrudcks09';
 
     function showFeedback(fromHistory) {
         hideAllScreens();
@@ -2598,25 +2570,19 @@
         const nameInput = document.getElementById('feedback-name');
         const textInput = document.getElementById('feedback-input');
         const secretCheck = document.getElementById('feedback-secret');
-        const pwInput = document.getElementById('feedback-pw');
         const text = textInput.value.trim();
         if (!text) { alert('피드백 내용을 입력해주세요.'); return; }
-        const isSecret = secretCheck.checked;
-        if (isSecret && !pwInput.value.trim()) { alert('비밀글 비밀번호를 입력해주세요.'); return; }
 
         try {
             await db.collection('feedbacks').add({
                 name: nameInput.value.trim() || '익명',
                 text: text,
-                secret: isSecret,
-                pw: isSecret ? pwInput.value.trim() : null,
+                secret: secretCheck.checked,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             textInput.value = '';
             nameInput.value = '';
             secretCheck.checked = false;
-            pwInput.value = '';
-            document.getElementById('feedback-pw-group').classList.remove('show');
             document.getElementById('feedback-success').classList.remove('hidden');
             setTimeout(() => document.getElementById('feedback-success').classList.add('hidden'), 3000);
             loadFeedbacks();
@@ -2698,7 +2664,7 @@
         const input = document.getElementById('fb-modal-pw');
         const errorEl = document.getElementById('fb-modal-pw-error');
         const date = fb.createdAt ? fb.createdAt.toDate().toLocaleDateString('ko-KR') : '';
-        if (input.value.trim() === fb.pw) {
+        if (input.value === FB_ADMIN_PW) {
             document.getElementById('fb-modal-content').innerHTML = `
                 <div class="fb-modal-header">
                     <span class="fb-modal-author">${esc(fb.name)}</span>

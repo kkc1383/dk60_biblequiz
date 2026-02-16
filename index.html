@@ -817,7 +817,45 @@
         }
         .feedback-textarea:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--primary-dark);
+        }
+        .feedback-secret-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .feedback-secret-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-red);
+            cursor: pointer;
+        }
+        .feedback-secret-row label {
+            cursor: pointer;
+            user-select: none;
+        }
+        .feedback-pw-group {
+            margin-top: 8px;
+            display: none;
+        }
+        .feedback-pw-group.show {
+            display: block;
+        }
+        .feedback-pw-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .feedback-pw-group input:focus {
+            outline: none;
+            border-color: var(--primary-dark);
         }
         .feedback-list {
             margin-top: 20px;
@@ -828,12 +866,17 @@
             border-radius: 12px;
             padding: 14px 16px;
             margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .feedback-item:active {
+            transform: scale(0.98);
         }
         .feedback-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .feedback-author {
             font-weight: 700;
@@ -844,11 +887,21 @@
             font-size: 0.75rem;
             color: #999;
         }
-        .feedback-text {
-            font-size: 0.9rem;
-            color: #333;
-            line-height: 1.5;
-            white-space: pre-wrap;
+        .feedback-preview {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .feedback-secret-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: #999;
+            font-style: italic;
         }
         .feedback-empty {
             text-align: center;
@@ -864,6 +917,97 @@
             text-align: center;
             font-weight: 700;
             margin-top: 10px;
+        }
+
+        /* 피드백 팝업 모달 */
+        .fb-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .fb-modal-overlay.show {
+            display: flex;
+        }
+        .fb-modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px 22px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            animation: fbModalIn 0.25s ease;
+        }
+        @keyframes fbModalIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .fb-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .fb-modal-author {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary-dark);
+        }
+        .fb-modal-date {
+            font-size: 0.78rem;
+            color: #999;
+        }
+        .fb-modal-body {
+            font-size: 0.95rem;
+            color: #333;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .fb-modal-close {
+            display: block;
+            margin: 18px auto 0;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 32px;
+            font-size: 0.9rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 700;
+            color: #555;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .fb-modal-close:hover {
+            background: #e0e0e0;
+        }
+        /* 비밀글 비밀번호 입력 모달 내부 */
+        .fb-modal-pw-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            margin-bottom: 10px;
+            transition: border-color 0.2s;
+        }
+        .fb-modal-pw-input:focus {
+            outline: none;
+            border-color: var(--primary-dark);
+        }
+        .fb-modal-pw-error {
+            color: var(--accent-red);
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: none;
         }
 
         /* 패치노트 화면 */
@@ -1187,10 +1331,25 @@
             <input type="text" id="feedback-name" class="form-input" placeholder="익명">
         </div>
         <textarea id="feedback-input" class="feedback-textarea" placeholder="의견을 자유롭게 작성해주세요..."></textarea>
+        <div class="feedback-secret-row">
+            <input type="checkbox" id="feedback-secret" onchange="toggleSecretPw()">
+            <label for="feedback-secret">비밀글</label>
+        </div>
+        <div class="feedback-pw-group" id="feedback-pw-group">
+            <input type="password" id="feedback-pw" placeholder="비밀번호를 설정하세요">
+        </div>
         <button class="btn btn-primary" style="margin-top: 12px;" onclick="submitFeedback()">피드백 보내기</button>
         <div id="feedback-success" class="feedback-success hidden">감사합니다! 피드백이 등록되었습니다.</div>
         <div class="feedback-list" id="feedback-list"></div>
         <button class="btn btn-secondary" style="margin-top: 12px;" onclick="showStart()">처음으로</button>
+    </div>
+</div>
+
+<!-- 피드백 상세 팝업 -->
+<div class="fb-modal-overlay" id="fb-modal-overlay" onclick="closeFbModal(event)">
+    <div class="fb-modal" id="fb-modal" onclick="event.stopPropagation()">
+        <div id="fb-modal-content"></div>
+        <button class="fb-modal-close" onclick="closeFbModal()">닫기</button>
     </div>
 </div>
 
@@ -2416,7 +2575,15 @@
         content.classList.toggle('open');
     }
 
-    // ─── 피드백 기능 ───
+    // ─── 피드백 기능 (Firestore 기반) ───
+    let cachedFeedbacks = []; // 로드된 피드백 캐시
+
+    function toggleSecretPw() {
+        const checked = document.getElementById('feedback-secret').checked;
+        document.getElementById('feedback-pw-group').classList.toggle('show', checked);
+        if (!checked) document.getElementById('feedback-pw').value = '';
+    }
+
     function showFeedback(fromHistory) {
         hideAllScreens();
         feedbackScreen.classList.remove('hidden');
@@ -2430,20 +2597,26 @@
     async function submitFeedback() {
         const nameInput = document.getElementById('feedback-name');
         const textInput = document.getElementById('feedback-input');
+        const secretCheck = document.getElementById('feedback-secret');
+        const pwInput = document.getElementById('feedback-pw');
         const text = textInput.value.trim();
-        if (!text) {
-            alert('피드백 내용을 입력해주세요.');
-            return;
-        }
-        const name = nameInput.value.trim() || '익명';
+        if (!text) { alert('피드백 내용을 입력해주세요.'); return; }
+        const isSecret = secretCheck.checked;
+        if (isSecret && !pwInput.value.trim()) { alert('비밀글 비밀번호를 입력해주세요.'); return; }
+
         try {
             await db.collection('feedbacks').add({
-                name: name,
+                name: nameInput.value.trim() || '익명',
                 text: text,
+                secret: isSecret,
+                pw: isSecret ? pwInput.value.trim() : null,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             textInput.value = '';
             nameInput.value = '';
+            secretCheck.checked = false;
+            pwInput.value = '';
+            document.getElementById('feedback-pw-group').classList.remove('show');
             document.getElementById('feedback-success').classList.remove('hidden');
             setTimeout(() => document.getElementById('feedback-success').classList.add('hidden'), 3000);
             loadFeedbacks();
@@ -2458,29 +2631,90 @@
         try {
             const snapshot = await db.collection('feedbacks')
                 .orderBy('createdAt', 'desc')
-                .limit(20)
+                .limit(50)
                 .get();
-            if (snapshot.empty) {
-                listEl.innerHTML = '<div class="feedback-empty">아직 피드백이 없습니다. 첫 번째 의견을 남겨주세요!</div>';
-                return;
-            }
-            let html = '';
-            snapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString('ko-KR') : '';
-                html += `<div class="feedback-item">
-                    <div class="feedback-item-header">
-                        <span class="feedback-author">${esc(data.name)}</span>
-                        <span class="feedback-date">${date}</span>
-                    </div>
-                    <div class="feedback-text">${esc(data.text)}</div>
-                </div>`;
-            });
-            listEl.innerHTML = html;
+            cachedFeedbacks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderFeedbacks();
         } catch (error) {
             console.error('피드백 불러오기 실패:', error);
             listEl.innerHTML = '<div class="feedback-empty">피드백을 불러오지 못했습니다.</div>';
         }
+    }
+
+    function renderFeedbacks() {
+        const listEl = document.getElementById('feedback-list');
+        if (cachedFeedbacks.length === 0) {
+            listEl.innerHTML = '<div class="feedback-empty">아직 피드백이 없습니다. 첫 번째 의견을 남겨주세요!</div>';
+            return;
+        }
+        let html = '';
+        cachedFeedbacks.forEach((fb, idx) => {
+            const date = fb.createdAt ? fb.createdAt.toDate().toLocaleDateString('ko-KR') : '';
+            const preview = fb.secret
+                ? '<span class="feedback-secret-badge">🔒 비밀글</span>'
+                : esc(fb.text.length > 40 ? fb.text.slice(0, 40) + '...' : fb.text);
+            html += `<div class="feedback-item" onclick="openFbModal(${idx})">
+                <div class="feedback-item-header">
+                    <span class="feedback-author">${esc(fb.name)}</span>
+                    <span class="feedback-date">${date}</span>
+                </div>
+                <div class="feedback-preview">${preview}</div>
+            </div>`;
+        });
+        listEl.innerHTML = html;
+    }
+
+    function openFbModal(idx) {
+        const fb = cachedFeedbacks[idx];
+        if (!fb) return;
+        const overlay = document.getElementById('fb-modal-overlay');
+        const content = document.getElementById('fb-modal-content');
+        const date = fb.createdAt ? fb.createdAt.toDate().toLocaleDateString('ko-KR') : '';
+
+        if (fb.secret) {
+            content.innerHTML = `
+                <div class="fb-modal-header">
+                    <span class="fb-modal-author">${esc(fb.name)}</span>
+                    <span class="fb-modal-date">${date}</span>
+                </div>
+                <p style="color:#666; font-size:0.9rem; margin-bottom:12px;">🔒 비밀글입니다. 비밀번호를 입력해주세요.</p>
+                <input type="password" class="fb-modal-pw-input" id="fb-modal-pw" placeholder="비밀번호 입력"
+                    onkeydown="if(event.key==='Enter')checkFbPw(${idx})">
+                <div class="fb-modal-pw-error" id="fb-modal-pw-error">비밀번호가 틀렸습니다.</div>
+                <button class="btn btn-primary" style="width:100%;" onclick="checkFbPw(${idx})">확인</button>`;
+        } else {
+            content.innerHTML = `
+                <div class="fb-modal-header">
+                    <span class="fb-modal-author">${esc(fb.name)}</span>
+                    <span class="fb-modal-date">${date}</span>
+                </div>
+                <div class="fb-modal-body">${esc(fb.text)}</div>`;
+        }
+        overlay.classList.add('show');
+    }
+
+    function checkFbPw(idx) {
+        const fb = cachedFeedbacks[idx];
+        const input = document.getElementById('fb-modal-pw');
+        const errorEl = document.getElementById('fb-modal-pw-error');
+        const date = fb.createdAt ? fb.createdAt.toDate().toLocaleDateString('ko-KR') : '';
+        if (input.value.trim() === fb.pw) {
+            document.getElementById('fb-modal-content').innerHTML = `
+                <div class="fb-modal-header">
+                    <span class="fb-modal-author">${esc(fb.name)}</span>
+                    <span class="fb-modal-date">${date}</span>
+                </div>
+                <div class="fb-modal-body">${esc(fb.text)}</div>`;
+        } else {
+            errorEl.style.display = 'block';
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    function closeFbModal(e) {
+        if (e && e.target !== document.getElementById('fb-modal-overlay')) return;
+        document.getElementById('fb-modal-overlay').classList.remove('show');
     }
 </script>
 

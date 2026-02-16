@@ -1306,10 +1306,6 @@
     <div id="feedback-screen" class="card hidden">
         <h2>피드백</h2>
         <p style="margin: 10px 0 15px; color: #666;">퀴즈에 대한 의견이나 건의사항을 남겨주세요!</p>
-        <div class="form-group">
-            <label for="feedback-name">이름 (선택)</label>
-            <input type="text" id="feedback-name" class="form-input" placeholder="익명">
-        </div>
         <textarea id="feedback-input" class="feedback-textarea" placeholder="의견을 자유롭게 작성해주세요..."></textarea>
         <div class="feedback-secret-row">
             <input type="checkbox" id="feedback-secret">
@@ -2567,7 +2563,6 @@
     }
 
     async function submitFeedback() {
-        const nameInput = document.getElementById('feedback-name');
         const textInput = document.getElementById('feedback-input');
         const secretCheck = document.getElementById('feedback-secret');
         const text = textInput.value.trim();
@@ -2575,13 +2570,11 @@
 
         try {
             await db.collection('feedbacks').add({
-                name: nameInput.value.trim() || '익명',
                 text: text,
                 secret: secretCheck.checked,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             textInput.value = '';
-            nameInput.value = '';
             secretCheck.checked = false;
             document.getElementById('feedback-success').classList.remove('hidden');
             setTimeout(() => document.getElementById('feedback-success').classList.add('hidden'), 3000);
@@ -2621,7 +2614,6 @@
                 : esc(fb.text.length > 40 ? fb.text.slice(0, 40) + '...' : fb.text);
             html += `<div class="feedback-item" onclick="openFbModal(${idx})">
                 <div class="feedback-item-header">
-                    <span class="feedback-author">${esc(fb.name)}</span>
                     <span class="feedback-date">${date}</span>
                 </div>
                 <div class="feedback-preview">${preview}</div>
@@ -2640,7 +2632,6 @@
         if (fb.secret) {
             content.innerHTML = `
                 <div class="fb-modal-header">
-                    <span class="fb-modal-author">${esc(fb.name)}</span>
                     <span class="fb-modal-date">${date}</span>
                 </div>
                 <p style="color:#666; font-size:0.9rem; margin-bottom:12px;">🔒 비밀글입니다. 비밀번호를 입력해주세요.</p>
@@ -2651,7 +2642,6 @@
         } else {
             content.innerHTML = `
                 <div class="fb-modal-header">
-                    <span class="fb-modal-author">${esc(fb.name)}</span>
                     <span class="fb-modal-date">${date}</span>
                 </div>
                 <div class="fb-modal-body">${esc(fb.text)}</div>`;
@@ -2667,7 +2657,6 @@
         if (input.value === FB_ADMIN_PW) {
             document.getElementById('fb-modal-content').innerHTML = `
                 <div class="fb-modal-header">
-                    <span class="fb-modal-author">${esc(fb.name)}</span>
                     <span class="fb-modal-date">${date}</span>
                 </div>
                 <div class="fb-modal-body">${esc(fb.text)}</div>`;

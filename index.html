@@ -1785,6 +1785,39 @@
         }
     }
 
+    // 한국어 어미 변형 생성 (다↔ㅁ/음)
+    function getEndingVariants(str) {
+        if (!str) return [str];
+        const variants = new Set([str]);
+        const H = 0xAC00, isH = c => c >= H && c <= 0xD7A3;
+        const trail = c => (c - H) % 28;
+        const setT = (c, t) => c - trail(c) + t;
+        // ~다 → 명사형
+        if (str.endsWith('다') && str.length >= 2) {
+            const pc = str.charCodeAt(str.length - 2);
+            if (isH(pc)) {
+                const t = trail(pc);
+                if (t === 4) // ㄴ받침: 진다→짐
+                    variants.add(str.slice(0, -2) + String.fromCharCode(setT(pc, 16)));
+                else if (t === 0) // 받침없음: 하다→함
+                    variants.add(str.slice(0, -2) + String.fromCharCode(setT(pc, 16)));
+                else // 기타받침: 있다→있음
+                    variants.add(str.slice(0, -1) + '음');
+            }
+        }
+        // ~ㅁ받침 → 서술형
+        const lc = str.charCodeAt(str.length - 1);
+        if (isH(lc) && trail(lc) === 16) {
+            variants.add(str.slice(0, -1) + String.fromCharCode(setT(lc, 0)) + '다');
+            variants.add(str.slice(0, -1) + String.fromCharCode(setT(lc, 4)) + '다');
+        }
+        // ~음 → 서술형
+        if (str.endsWith('음') && str.length >= 2) {
+            variants.add(str.slice(0, -1) + '다');
+        }
+        return [...variants];
+    }
+
     // 주관식 정답 확인
     function submitSubjective() {
         if (!isAnswering) return;
@@ -1795,9 +1828,15 @@
         const currentData = shuffledQuiz[currentQuestionIndex];
         const isCorrect = currentData.answer.some(ans => {
             const normAns = ans.replace(/\s/g, '');
-            if (userValue === normAns) return true;
-            // 3글자 이상 답은 포함 관계로 관대하게 처리
-            if (normAns.length >= 3 && userValue.includes(normAns)) return true;
+            // 어미 변형 포함 비교
+            const ansVars = getEndingVariants(normAns);
+            const userVars = getEndingVariants(userValue);
+            for (const av of ansVars) {
+                for (const uv of userVars) {
+                    if (uv === av) return true;
+                    if (av.length >= 3 && uv.includes(av)) return true;
+                }
+            }
             // 쉼표로 구분된 답은 각 요소를 모두 포함하면 정답 (순서 무관)
             if (ans.includes(',')) {
                 const parts = ans.split(',').map(p => p.trim().replace(/\s/g, ''));

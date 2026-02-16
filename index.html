@@ -1093,7 +1093,7 @@
     let timeLeft = 0;
     let currentCorrectIndex = 0;
     let currentShuffledOptions = [];
-    const TIME_LIMITS = { 'objective': 10, 'subjective': 15 };
+    const TIME_LIMITS = { 'objective': 20, 'subjective': 30 };
 
     const startScreen = document.getElementById('start-screen');
     const registerScreen = document.getElementById('register-screen');
@@ -1113,6 +1113,14 @@
         if (e.key === 'Enter') {
             e.preventDefault();
             submitSubjective();
+        }
+    });
+
+    // 참가자 등록 화면에서 Enter키로 퀴즈 시작
+    document.getElementById('input-name').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            startQuiz();
         }
     });
 
@@ -1561,6 +1569,14 @@
                 db.collection('scores').doc(docId).get(),
                 db.collection('scores').orderBy('score', 'desc').limit(20).get()
             ]);
+
+            // 같은 소속+이름으로 이미 기록이 있으면 중복 참가 차단
+            if (prevDoc.exists) {
+                errorName.textContent = '이미 참가한 이름입니다. 다른 이름을 입력해주세요.';
+                errorName.style.display = 'block';
+                return;
+            }
+
             previousScore = prevDoc.exists ? prevDoc.data().score : null;
             rivalData = rivalSnapshot.docs.map(d => ({
                 name: d.data().name,

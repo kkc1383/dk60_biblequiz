@@ -50,6 +50,7 @@
             max-width: 200px;
             height: auto;
             margin-bottom: 8px;
+            cursor: pointer;
         }
         .title {
             font-size: 1.6rem;
@@ -801,13 +802,77 @@
             }
         }
 
+        /* 피드백 화면 */
+        .feedback-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .feedback-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .feedback-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .feedback-item {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .feedback-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .feedback-author {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+        }
+        .feedback-date {
+            font-size: 0.75rem;
+            color: #999;
+        }
+        .feedback-text {
+            font-size: 0.9rem;
+            color: #333;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .feedback-empty {
+            text-align: center;
+            padding: 30px 0;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        .feedback-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <img src="logo.png" alt="동광교회 60주년 로고" class="logo-img">
+        <img src="logo.png" alt="동광교회 60주년 로고" class="logo-img" onclick="showStart()">
         <h1 class="title">전교인 온라인 성경퀴즈대회</h1>
         <p class="subtitle">동광교회 창립 60주년 기념</p>
     </header>
@@ -837,6 +902,7 @@
         </div>
         <button class="btn btn-primary" onclick="showRegister()">퀴즈 참가하기</button>
         <button class="btn btn-secondary" style="margin-top:8px;" onclick="showLeaderboard()">리더보드 보기</button>
+        <button class="btn btn-secondary" style="margin-top:8px;" onclick="showFeedback()">피드백 남기기</button>
     </div>
 
     <!-- 2. 소속/이름 입력 화면 -->
@@ -958,6 +1024,21 @@
         <div id="leaderboard-content"></div>
         <div id="department-content" class="hidden"></div>
         <button class="btn btn-primary" style="margin-top: 20px;" onclick="showStart()">처음으로</button>
+    </div>
+
+    <!-- 6. 피드백 화면 -->
+    <div id="feedback-screen" class="card hidden">
+        <h2>피드백</h2>
+        <p style="margin: 10px 0 15px; color: #666;">퀴즈에 대한 의견이나 건의사항을 남겨주세요!</p>
+        <div class="form-group">
+            <label for="feedback-name">이름 (선택)</label>
+            <input type="text" id="feedback-name" class="form-input" placeholder="익명">
+        </div>
+        <textarea id="feedback-input" class="feedback-textarea" placeholder="의견을 자유롭게 작성해주세요..."></textarea>
+        <button class="btn btn-primary" style="margin-top: 12px;" onclick="submitFeedback()">피드백 보내기</button>
+        <div id="feedback-success" class="feedback-success hidden">감사합니다! 피드백이 등록되었습니다.</div>
+        <div class="feedback-list" id="feedback-list"></div>
+        <button class="btn btn-secondary" style="margin-top: 12px;" onclick="showStart()">처음으로</button>
     </div>
 </div>
 
@@ -1101,6 +1182,7 @@
     const resultScreen = document.getElementById('result-screen');
     const leaderboardScreen = document.getElementById('leaderboard-screen');
     const gameoverScreen = document.getElementById('gameover-screen');
+    const feedbackScreen = document.getElementById('feedback-screen');
     const questionEl = document.getElementById('question');
     const optionsContainer = document.getElementById('options-container');
     const inputContainer = document.getElementById('input-container');
@@ -1125,7 +1207,7 @@
     });
 
     function hideAllScreens() {
-        [startScreen, registerScreen, quizScreen, resultScreen, leaderboardScreen, gameoverScreen]
+        [startScreen, registerScreen, quizScreen, resultScreen, leaderboardScreen, gameoverScreen, feedbackScreen]
             .forEach(s => s.classList.add('hidden'));
     }
 
@@ -1150,6 +1232,7 @@
             case 'result': break; // 결과 화면은 다시 못 돌아감
             case 'gameover': break;
             case 'leaderboard': showLeaderboard(true); break;
+            case 'feedback': showFeedback(true); break;
             default: showStart(true); break;
         }
     });
@@ -2170,6 +2253,73 @@
         } catch (error) {
             console.error('리더보드 조회 실패:', error);
             container.innerHTML = '<div class="leaderboard-empty">데이터를 불러오지 못했습니다.</div>';
+        }
+    }
+
+    // ─── 피드백 기능 ───
+    function showFeedback(fromHistory) {
+        hideAllScreens();
+        feedbackScreen.classList.remove('hidden');
+        feedbackScreen.classList.add('card-enter');
+        setTimeout(() => feedbackScreen.classList.remove('card-enter'), 400);
+        document.getElementById('feedback-success').classList.add('hidden');
+        if (!fromHistory) pushScreen('feedback');
+        loadFeedbacks();
+    }
+
+    async function submitFeedback() {
+        const nameInput = document.getElementById('feedback-name');
+        const textInput = document.getElementById('feedback-input');
+        const text = textInput.value.trim();
+        if (!text) {
+            alert('피드백 내용을 입력해주세요.');
+            return;
+        }
+        const name = nameInput.value.trim() || '익명';
+        try {
+            await db.collection('feedbacks').add({
+                name: name,
+                text: text,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            textInput.value = '';
+            nameInput.value = '';
+            document.getElementById('feedback-success').classList.remove('hidden');
+            setTimeout(() => document.getElementById('feedback-success').classList.add('hidden'), 3000);
+            loadFeedbacks();
+        } catch (error) {
+            console.error('피드백 저장 실패:', error);
+            alert('피드백 전송에 실패했습니다. 다시 시도해주세요.');
+        }
+    }
+
+    async function loadFeedbacks() {
+        const listEl = document.getElementById('feedback-list');
+        try {
+            const snapshot = await db.collection('feedbacks')
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .get();
+            if (snapshot.empty) {
+                listEl.innerHTML = '<div class="feedback-empty">아직 피드백이 없습니다. 첫 번째 의견을 남겨주세요!</div>';
+                return;
+            }
+            let html = '';
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString('ko-KR') : '';
+                html += `<div class="feedback-item">
+                    <div class="feedback-item-header">
+                        <span class="feedback-author">${esc(data.name)}</span>
+                        <span class="feedback-date">${date}</span>
+                    </div>
+                    <div class="feedback-text">${esc(data.text)}</div>
+                </div>`;
+            });
+            listEl.innerHTML = html;
+        } catch (error) {
+            console.error('피드백 불러오기 실패:', error);
+            listEl.innerHTML = '<div class="feedback-empty">피드백을 불러오지 못했습니다.</div>';
         }
     }
 </script>

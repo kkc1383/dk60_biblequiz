@@ -866,6 +866,88 @@
             margin-top: 10px;
         }
 
+        /* 패치노트 화면 */
+        .patch-notes-toggle {
+            background: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            color: #666;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .patch-notes-toggle:hover {
+            background: #f5f5f5;
+            border-color: #bbb;
+        }
+        .patch-notes-toggle .toggle-arrow {
+            transition: transform 0.3s;
+            font-size: 0.75rem;
+        }
+        .patch-notes-toggle.open .toggle-arrow {
+            transform: rotate(180deg);
+        }
+        .patch-notes-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .patch-notes-content.open {
+            max-height: 2000px;
+        }
+        .patch-note-item {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 10px;
+            text-align: left;
+        }
+        .patch-note-date {
+            font-size: 0.75rem;
+            color: #999;
+            margin-bottom: 4px;
+        }
+        .patch-note-version {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--primary-dark);
+            margin-bottom: 6px;
+        }
+        .patch-note-changes {
+            font-size: 0.85rem;
+            color: #444;
+            line-height: 1.6;
+        }
+        .patch-note-changes li {
+            margin-bottom: 2px;
+            list-style: none;
+        }
+        .patch-note-changes li::before {
+            content: '• ';
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+        .patch-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 6px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .patch-tag-new { background: #e3f2fd; color: #1565c0; }
+        .patch-tag-fix { background: #fce4ec; color: #c62828; }
+        .patch-tag-improve { background: #e8f5e9; color: #2e7d32; }
+
     </style>
 </head>
 <body>
@@ -903,6 +985,76 @@
         <button class="btn btn-primary" onclick="showRegister()">퀴즈 참가하기</button>
         <button class="btn btn-secondary" style="margin-top:8px;" onclick="showLeaderboard()">리더보드 보기</button>
         <button class="btn btn-secondary" style="margin-top:8px;" onclick="showFeedback()">피드백 남기기</button>
+
+        <button class="patch-notes-toggle" id="patch-toggle" onclick="togglePatchNotes()">
+            <span>패치노트 (업데이트 내역)</span>
+            <span class="toggle-arrow">▼</span>
+        </button>
+        <div class="patch-notes-content" id="patch-notes-content">
+
+            <div class="patch-note-item">
+                <div class="patch-note-date">2026.02.16</div>
+                <div class="patch-note-version">v1.8 - 패치노트 & 피드백</div>
+                <ul class="patch-note-changes">
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 홈 화면에 패치노트(업데이트 내역) 추가</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 피드백 남기기 기능 추가</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 로고 클릭 시 홈으로 이동</li>
+                </ul>
+            </div>
+
+            <div class="patch-note-item">
+                <div class="patch-note-date">2026.02.15</div>
+                <div class="patch-note-version">v1.7 - 정답 인정 대폭 보강</div>
+                <ul class="patch-note-changes">
+                    <li><span class="patch-tag patch-tag-fix">FIX</span> 게셈/어룽지고/에스라 약어 등 오타 수정</li>
+                    <li><span class="patch-tag patch-tag-improve">개선</span> 주관식 전체 정답 바리에이션 대폭 보강</li>
+                    <li><span class="patch-tag patch-tag-improve">개선</span> 42,360 등 숫자 정답 바리에이션 추가</li>
+                </ul>
+            </div>
+
+            <div class="patch-note-item">
+                <div class="patch-note-date">2026.02.14</div>
+                <div class="patch-note-version">v1.6 - 한국어 어미 자동 인정</div>
+                <ul class="patch-note-changes">
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 주관식 한국어 어미 변형 자동 정답 인정</li>
+                    <li><span class="patch-tag patch-tag-improve">개선</span> '와/과' 조사 순서 무관 정답 인정</li>
+                    <li><span class="patch-tag patch-tag-improve">개선</span> 쉼표 구분 답안 순서 무관 정답 인정</li>
+                </ul>
+            </div>
+
+            <div class="patch-note-item">
+                <div class="patch-note-date">2026.02.13</div>
+                <div class="patch-note-version">v1.5 - 제한시간 & UX 개선</div>
+                <ul class="patch-note-changes">
+                    <li><span class="patch-tag patch-tag-improve">개선</span> 제한시간 2배 증가</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 엔터키로 퀴즈 시작 지원</li>
+                    <li><span class="patch-tag patch-tag-fix">FIX</span> 같은 이름 중복 참가 차단 기능 제거</li>
+                </ul>
+            </div>
+
+            <div class="patch-note-item">
+                <div class="patch-note-date">2026.02.12</div>
+                <div class="patch-note-version">v1.4 - 피드백 메시지 & 기록 경신</div>
+                <ul class="patch-note-changes">
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 기록 경신 실시간 알림 기능</li>
+                    <li><span class="patch-tag patch-tag-improve">개선</span> 정답/오답/시간초과 피드백 메시지 대폭 확장</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 맞춘 문제 제외 기능 (이후 제거)</li>
+                </ul>
+            </div>
+
+            <div class="patch-note-item">
+                <div class="patch-note-date">2026.02.11</div>
+                <div class="patch-note-version">v1.0 - 최초 출시</div>
+                <ul class="patch-note-changes">
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 학개/스가랴/에스라/느헤미야 80문제</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 객관식 + 주관식 혼합 퀴즈</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 난이도별 배점 (하100/중200/상300)</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 연속 정답 보너스 시스템</li>
+                    <li><span class="patch-tag patch-tag-new">NEW</span> 리더보드 (전체/부서별)</li>
+                </ul>
+            </div>
+
+        </div>
     </div>
 
     <!-- 2. 소속/이름 입력 화면 -->
@@ -2254,6 +2406,14 @@
             console.error('리더보드 조회 실패:', error);
             container.innerHTML = '<div class="leaderboard-empty">데이터를 불러오지 못했습니다.</div>';
         }
+    }
+
+    // ─── 패치노트 토글 ───
+    function togglePatchNotes() {
+        const toggle = document.getElementById('patch-toggle');
+        const content = document.getElementById('patch-notes-content');
+        toggle.classList.toggle('open');
+        content.classList.toggle('open');
     }
 
     // ─── 피드백 기능 ───

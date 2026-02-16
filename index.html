@@ -1798,6 +1798,11 @@
             if (userValue === normAns) return true;
             // 3글자 이상 답은 포함 관계로 관대하게 처리
             if (normAns.length >= 3 && userValue.includes(normAns)) return true;
+            // 쉼표로 구분된 답은 각 요소를 모두 포함하면 정답 (순서 무관)
+            if (ans.includes(',')) {
+                const parts = ans.split(',').map(p => p.trim().replace(/\s/g, ''));
+                if (parts.length > 1 && parts.every(part => userValue.includes(part))) return true;
+            }
             return false;
         });
 

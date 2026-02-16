@@ -9,6 +9,8 @@
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase Hosting 자동 설정 (API 키를 소스코드에 노출하지 않음) -->
+    <script src="/__/firebase/init.js"></script>
     <style>
         :root {
             --primary-yellow: #FFC107;
@@ -961,17 +963,7 @@
 
 <script>
     // ─── Firebase 초기화 ───
-    // TODO: 아래 config 값을 Firebase 콘솔에서 복사한 값으로 교체하세요
-    const firebaseConfig = {
-        apiKey: "AIzaSyDmaY9vFpL3xczQQ96lt55uqerekNfdHr8",
-        authDomain: "dkbiblequiz.firebaseapp.com",
-        projectId: "dkbiblequiz",
-        storageBucket: "dkbiblequiz.firebasestorage.app",
-        messagingSenderId: "330186942750",
-        appId: "1:330186942750:web:94bd4f131cc4bedf3a810f",
-        measurementId: "G-31TPW6GY9Y"
-    };
-    firebase.initializeApp(firebaseConfig);
+    // Firebase Hosting의 /__/firebase/init.js가 자동으로 firebase.initializeApp()을 호출합니다.
     const db = firebase.firestore();
 
     // 문제 데이터 (PDF 원본 80문제)

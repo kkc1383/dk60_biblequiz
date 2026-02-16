@@ -1803,10 +1803,11 @@
                 const parts = ans.split(',').map(p => p.trim().replace(/\s/g, ''));
                 if (parts.length > 1 && parts.every(part => userValue.includes(part))) return true;
             }
-            // '과'로 연결된 답도 각 요소를 모두 포함하면 정답 (순서 무관)
-            if (ans.includes('과')) {
-                const parts = ans.split('과').map(p => p.trim().replace(/\s/g, ''));
-                if (parts.length === 2 && parts[0] && parts[1] && parts.every(part => userValue.includes(part))) return true;
+            // '과/와'로 연결된 답도 각 요소를 모두 포함하면 정답 (순서 무관)
+            const matchKwa = ans.match(/^(.+?)[과와](.+)$/);
+            if (matchKwa) {
+                const parts = [matchKwa[1], matchKwa[2]].map(p => p.trim().replace(/\s/g, ''));
+                if (parts[0] && parts[1] && parts.every(part => userValue.includes(part))) return true;
             }
             return false;
         });

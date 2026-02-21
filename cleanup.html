@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DB 정리 도구</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', sans-serif; background: #f5f5f5; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; color: #333; }
+    .info { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
+    .actions { text-align: center; margin-bottom: 20px; }
+    .actions button {
+        padding: 10px 20px; margin: 5px; border: none; border-radius: 8px;
+        font-size: 14px; cursor: pointer; font-weight: 600;
+    }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-migrate { background: #3498db; color: white; }
+    .btn-migrate:hover { background: #2980b9; }
+    .btn-refresh { background: #2ecc71; color: white; }
+    .btn-refresh:hover { background: #27ae60; }
+    table {
+        width: 100%; border-collapse: collapse; background: white;
+        border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th { background: #34495e; color: white; padding: 12px 8px; text-align: left; font-size: 13px; }
+    td { padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 13px; }
+    tr:hover { background: #f0f8ff; }
+    tr.test-data { background: #fff3f3; }
+    .doc-id { color: #999; font-size: 11px; word-break: break-all; }
+    .delete-btn {
+        background: #e74c3c; color: white; border: none; padding: 4px 10px;
+        border-radius: 4px; cursor: pointer; font-size: 12px;
+    }
+    .delete-btn:hover { background: #c0392b; }
+    .status { text-align: center; padding: 20px; color: #666; }
+    .count { text-align: center; margin-bottom: 10px; font-size: 14px; color: #555; }
+</style>
+</head>
+<body>
+
+<h1>Firestore DB 정리 도구</h1>
+<p class="info">테스트 데이터를 삭제하고, 기존 데이터를 새 형식으로 마이그레이션합니다.<br>
+<strong>사용 후 이 파일은 삭제해주세요.</strong></p>
+
+<div class="actions">
+    <button class="btn-refresh" onclick="loadData()">새로고침</button>
+    <button class="btn-danger" onclick="deleteSelected()">선택 항목 삭제</button>
+    <button class="btn-migrate" onclick="migrateAll()">전체 마이그레이션 (중복 정리 + 새 ID 형식)</button>
+</div>
+
+<div class="count" id="count"></div>
+<div id="table-container">
+    <div class="status">로딩 중...</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDmaY9vFpL3xczQQ96lt55uqerekNfdHr8",
+        authDomain: "dkbiblequiz.firebaseapp.com",
+        projectId: "dkbiblequiz",
+        storageBucket: "dkbiblequiz.firebasestorage.app",
+        messagingSenderId: "330186942750",
+        appId: "1:330186942750:web:94bd4f131cc4bedf3a810f",
+        measurementId: "G-31TPW6GY9Y"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let allDocs = [];
+
+    async function loadData() {
+        const container = document.getElementById('table-container');
+        container.innerHTML = '<div class="status">로딩 중...</div>';
+
+        try {
+            const snapshot = await db.collection('scores').get();
+            allDocs = snapshot.docs;
+
+            if (snapshot.empty) {
+                container.innerHTML = '<div class="status">데이터가 없습니다.</div>';
+                document.getElementById('count').textContent = '';
+                return;
+            }
+
+            document.getElementById('count').textContent = '총 ' + allDocs.length + '개 레코드';
+
+            let html = '<table><thead><tr>';
+            html += '<th><input type="checkbox" id="select-all" onchange="toggleAll(this)"></th>';
+            html += '<th>문서 ID</th><th>소속</th><th>이름</th><th>점수</th><th>시간</th><th>삭제</th>';
+            html += '</tr></thead><tbody>';
+
+            allDocs.forEach(function(doc) {
+                var d = doc.data();
+                var isTest = isTestData(d.name, d.group);
+                var rowClass = isTest ? ' class="test-data"' : '';
+                var ts = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleString('ko-KR') : '-';
+
+                html += '<tr' + rowClass + '>';
+                html += '<td><input type="checkbox" class="row-check" value="' + doc.id + '"' + (isTest ? ' checked' : '') + '></td>';
+                html += '<td><span class="doc-id">' + esc(doc.id) + '</span></td>';
+                html += '<td>' + esc(d.group || '') + '</td>';
+                html += '<td>' + esc(d.name || '') + '</td>';
+                html += '<td>' + (d.score || 0) + '점</td>';
+                html += '<td>' + ts + '</td>';
+                html += '<td><button class="delete-btn" onclick="deleteOne(\'' + doc.id + '\')">삭제</button></td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (error) {
+            container.innerHTML = '<div class="status">오류: ' + error.message + '</div>';
+        }
+    }
+
+    function isTestData(name, group) {
+        if (!name || !group) return true;
+        var n = (name || '').trim();
+        var g = (group || '').trim();
+        if (n.length === 0 || g.length === 0) return true;
+        if (/^[0-9]+$/.test(n)) return true;
+        if (/^[a-zA-Z]{1,4}$/.test(n) && !/^[A-Z][a-z]+$/.test(n)) return true;
+        if (/^(.)\1+$/.test(n)) return true;
+        if (n === 'test' || n === 'ㅎㅎ' || n === 'ㅋㅋ' || n === 'ㄱㄱ' || n === 'ㅇㅇ') return true;
+        return false;
+    }
+
+    function esc(str) {
+        var d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    function toggleAll(checkbox) {
+        document.querySelectorAll('.row-check').forEach(function(cb) {
+            cb.checked = checkbox.checked;
+        });
+    }
+
+    async function deleteOne(docId) {
+        if (!confirm('"' + docId + '" 문서를 삭제하시겠습니까?')) return;
+        try {
+            await db.collection('scores').doc(docId).delete();
+            alert('삭제 완료');
+            loadData();
+        } catch (error) {
+            alert('삭제 실패: ' + error.message);
+        }
+    }
+
+    async function deleteSelected() {
+        var checks = document.querySelectorAll('.row-check:checked');
+        if (checks.length === 0) {
+            alert('삭제할 항목을 선택해주세요.');
+            return;
+        }
+        if (!confirm(checks.length + '개 항목을 삭제하시겠습니까?')) return;
+
+        try {
+            var batch = db.batch();
+            checks.forEach(function(cb) {
+                batch.delete(db.collection('scores').doc(cb.value));
+            });
+            await batch.commit();
+            alert(checks.length + '개 삭제 완료');
+            loadData();
+        } catch (error) {
+            alert('삭제 실패: ' + error.message);
+        }
+    }
+
+    async function migrateAll() {
+        if (!confirm('전체 데이터를 정리합니다.\n\n1. 같은 소속+이름은 최고 점수만 유지\n2. 새 문서 ID 형식(소속_이름)으로 변환\n3. 테스트 데이터는 삭제\n\n진행하시겠습니까?')) return;
+
+        try {
+            var snapshot = await db.collection('scores').get();
+            if (snapshot.empty) {
+                alert('데이터가 없습니다.');
+                return;
+            }
+
+            // Group by group+name, keep highest score
+            var best = {};
+            var toDelete = [];
+
+            snapshot.docs.forEach(function(doc) {
+                var d = doc.data();
+
+                if (isTestData(d.name, d.group)) {
+                    toDelete.push(doc.id);
+                    return;
+                }
+
+                var key = d.group + '_' + d.name;
+                if (!best[key] || d.score > best[key].score) {
+                    best[key] = { group: d.group, name: d.name, score: d.score };
+                }
+                toDelete.push(doc.id);
+            });
+
+            // Delete all old documents (batch limit = 500)
+            for (var i = 0; i < toDelete.length; i += 500) {
+                var batch = db.batch();
+                var chunk = toDelete.slice(i, i + 500);
+                chunk.forEach(function(id) {
+                    batch.delete(db.collection('scores').doc(id));
+                });
+                await batch.commit();
+            }
+
+            // Re-create with deterministic IDs
+            var keys = Object.keys(best);
+            for (var j = 0; j < keys.length; j += 500) {
+                var batch = db.batch();
+                var chunk = keys.slice(j, j + 500);
+                chunk.forEach(function(key) {
+                    var entry = best[key];
+                    batch.set(db.collection('scores').doc(key), {
+                        group: entry.group,
+                        name: entry.name,
+                        score: entry.score,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                await batch.commit();
+            }
+
+            alert('마이그레이션 완료!\n- 테스트 데이터 삭제됨\n- ' + keys.length + '명의 최고 점수 보존됨');
+            loadData();
+        } catch (error) {
+            alert('마이그레이션 실패: ' + error.message);
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>
